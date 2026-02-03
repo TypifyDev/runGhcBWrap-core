@@ -14,6 +14,9 @@ import RunGhc.SystemModule
 import RunGhc.Executable
 import RunGhc.MakeExe
 import RunGhc.UserInput
+import RunGhc.MakeTest.TypeSig
+import RunGhc.MakeTest.HKTs
+import RunGhc.MakeTest.FFI
 
 import GHC.Generics
 import Text.IStr
@@ -73,7 +76,14 @@ data TestSolutionResult = TestSolutionResult
 instance FromJSON TestSolutionResult
 instance ToJSON TestSolutionResult
 
-
+-- A set of functions
+data TypeInfo a b = TypeInfo
+  { _typesIn :: a
+  , _typeOut :: b
+  }
+type T a = Proxy a
+type_ :: T a
+type_ = Proxy
 
 -- A neat hack to pass back the result like a typed-ffi
 -- This is because we can import this in both the executable 
@@ -125,365 +135,354 @@ newtype NoNameScript = NoNameScript
   { getNoNameScript
     :: ModuleName {-random name-}
     -> FunctionName {-random name-}
-    -> VarName{-random name-}    
+    -> VarName {-random name-}    
     -> Script
     -- ^ Should we instead make this Locatable a => a ?
   }
 
+type VarName = T.Text
+
 -- A script definition that defers picking names until later, this is why it contains a function
-newtype TypedNoNameScript input output = TypedNoNameScript
+newtype TypedNoNameScript inputSlot outputSlot = TypedNoNameScript
   { getTypedNoNameScript
     :: ModuleName {-random name-}
     -> FunctionName {-random name-}
     -> VarName{-random name-}
-    -> TypeInfo (T input) (T output)
+    -> TypeInfo (T inputSlot) (T outputSlot)
     -> Script
     -- ^ Should we instead make this Locatable a => a ?
   }
 
-typedNoNameScriptExample :: TypedNoNameScript (Int, Bool) Int
-typedNoNameScriptExample = TypedNoNameScript $ \(ModuleName moduleName) fname varName (TypeInfo input output) ->
-  let (int, bool) = arity2Str input
-      intOut = arity1Str output 
-  in Script $ T.pack [istr|
-module #{moduleName} where
+data Purity = Pure | Impure
 
-#{varName} :: IO [(#{int}, #{bool})]
-#{varName} = pure $ zip [1..10] (even <$> [11..20])
+--- monadic MAKE
+--- change: use compareFuncHKT instead of compareFuncTyped -> set to False
+compareGenArityT1 :: Purity -> TypedNoNameScript a b -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT1 purity = compareFuncHKT (lift purity . lambdaT1)
 
-#{fname} :: #{int} -> #{bool} -> #{intOut}
-#{fname} x y = if y then x * 2 else x * 5
-|]
+compareGenArityT2 :: Purity -> TypedNoNameScript (a, b) c -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT2 purity = compareFuncHKT (lift purity . lambdaT2)
+
+compareGenArityT3 :: Purity -> TypedNoNameScript (a, b, c) d -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT3 purity = compareFuncHKT (lift purity . lambdaT3)
+
+compareGenArityT4 :: Purity -> TypedNoNameScript (a, b, c, d) e -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT4 purity = compareFuncHKT (lift purity . lambdaT4)
+
+compareGenArityT5 :: Purity -> TypedNoNameScript (a, b, c, d, e) f -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT5 purity = compareFuncHKT (lift purity . lambdaT5)
+
+compareGenArityT6 :: Purity -> TypedNoNameScript (a, b, c, d, e, f) g -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT6 purity = compareFuncHKT (lift purity . lambdaT6)
+
+compareGenArityT7 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g) h -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT7 purity = compareFuncHKT (lift purity . lambdaT7)
+
+compareGenArityT8 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h) i -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT8 purity = compareFuncHKT (lift purity . lambdaT8)
+
+compareGenArityT9 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i) j -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT9 purity = compareFuncHKT (lift purity . lambdaT9)
+
+compareGenArityT10 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j) k -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT10 purity = compareFuncHKT (lift purity . lambdaT10)
+
+compareGenArityT11 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k) l -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT11 purity = compareFuncHKT (lift purity . lambdaT11)
+
+compareGenArityT12 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l) m -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT12 purity = compareFuncHKT (lift purity . lambdaT12)
+
+compareGenArityT13 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m) n -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT13 purity = compareFuncHKT (lift purity . lambdaT13)
+
+compareGenArityT14 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n) o -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT14 purity = compareFuncHKT (lift purity . lambdaT14)
+
+compareGenArityT15 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) p -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT15 purity = compareFuncHKT (lift purity . lambdaT15)
+
+compareGenArityT16 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) q -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT16 purity = compareFuncHKT (lift purity . lambdaT16)
+
+compareGenArityT17 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q) r -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT17 purity = compareFuncHKT (lift purity . lambdaT17)
+
+compareGenArityT18 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) s -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT18 purity = compareFuncHKT (lift purity . lambdaT18)
+
+compareGenArityT19 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) t -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT19 purity = compareFuncHKT (lift purity . lambdaT19)
+
+compareGenArityT20 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) u -> SourceCode -> IO (Either T.Text Executable)
+compareGenArityT20 purity = compareFuncHKT (lift purity . lambdaT20)
 
 
-type VarName = T.Text -- the reference to the Test
-nnScriptExample :: NoNameScript
-nnScriptExample = NoNameScript $ \(ModuleName moduleName) fname varName -> Script $ T.pack [istr|
-module #{moduleName} where
 
-#{varName} :: IO [(Int, Int)]
-#{varName} = pure $ zip [1..10] [11..20]
+-- Is there a better way to say "This is from IO a but we know that a will be printed and decoded as FromJSON a
+-- So all we need to do here is communicate what b is so that FromJSON works
+-- and as i understand if we dont handle this properly then it will
+-- likely error with "No instance for FromJSON (IO b)"
+handleMonadicOutputType :: TypedNoNameScript a (m b) -> TypedNoNameScript a b
+handleMonadicOutputType (TypedNoNameScript f) = TypedNoNameScript $ 
+  \moduleName funcName varName (TypeInfo inputProxy outputProxy) ->
+    -- We need to construct a TypeInfo with (m b) as output
+    -- outputProxy :: Proxy b
+    -- We need :: Proxy (m b)
+    -- But we can't construct that from just Proxy b without knowing m
+    f moduleName funcName varName (TypeInfo inputProxy (liftProxy outputProxy))
+  where
+    -- This doesn't work because we don't know what m is!
+    liftProxy :: Proxy b -> Proxy (m b)
+    liftProxy _ = Proxy
 
-#{fname} :: Int -> Int -> Int
-#{fname} x y = x + y
-|]
-  
-exampleUserScript :: T.Text
-exampleUserScript = T.pack [istr|
-module UserModule where
-userFunc :: Int -> Int -> Int
-userFunc x y = x + y
-|]
+---- Shortforms
+compareMonadicArityT1 :: TypedNoNameScript a            (m b) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT1  nnScript srcCode = compareGenArityT1  Impure (handleMonadicOutputType nnScript) srcCode
 
-compareFuncExample :: IO (Either T.Text Executable)
-compareFuncExample = comparePureArity1 nnScriptExample $
-  SourceCode
-  { _sourceCode_code = exampleUserScript
-  , _sourceCode_target = "userFunc"
-  }
+compareMonadicArityT2 :: TypedNoNameScript (a, b)        (m c) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT2  nnScript srcCode = compareGenArityT2  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT3 :: TypedNoNameScript (a, b, c)      (m d) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT3  nnScript srcCode = compareGenArityT3  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT4 :: TypedNoNameScript (a, b, c, d)    (m e) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT4  nnScript srcCode = compareGenArityT4  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT5 :: TypedNoNameScript (a, b, c, d, e)  (m f) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT5  nnScript srcCode = compareGenArityT5  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT6 :: TypedNoNameScript (a, b, c, d, e, f) (m g) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT6  nnScript srcCode = compareGenArityT6  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT7 :: TypedNoNameScript (a, b, c, d, e, f, g) (m h) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT7  nnScript srcCode = compareGenArityT7  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT8 :: TypedNoNameScript (a, b, c, d, e, f, g, h) (m i) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT8  nnScript srcCode = compareGenArityT8  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT9 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i) (m j) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT9  nnScript srcCode = compareGenArityT9  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT10 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j) (m k) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT10 nnScript srcCode = compareGenArityT10 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT11 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k) (m l) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT11 nnScript srcCode = compareGenArityT11 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT12 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l) (m m1) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT12 nnScript srcCode = compareGenArityT12 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT13 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1) (m n) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT13 nnScript srcCode = compareGenArityT13 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT14 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n) (m o) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT14 nnScript srcCode = compareGenArityT14 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT15 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o) (m p) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT15 nnScript srcCode = compareGenArityT15 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT16 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p) (m q) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT16 nnScript srcCode = compareGenArityT16 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT17 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q) (m r) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT17 nnScript srcCode = compareGenArityT17 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT18 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q, r) (m s) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT18 nnScript srcCode = compareGenArityT18 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT19 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q, r, s) (m t) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT19 nnScript srcCode = compareGenArityT19 Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT20 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q, r, s, t) (m u) -> SourceCode -> IO (Either T.Text Executable)
+compareMonadicArityT20 nnScript srcCode = compareGenArityT20 Impure (handleMonadicOutputType nnScript) srcCode
+
 
 comparePureArityT1 :: TypedNoNameScript a b -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT1 = compareFuncTyped liftPureT1
+comparePureArityT1 = compareGenArityT1 Pure
 
 comparePureArityT2 :: TypedNoNameScript (a, b) c -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT2 = compareFuncTyped liftPureT2
+comparePureArityT2 = compareGenArityT2 Pure
 
 comparePureArityT3 :: TypedNoNameScript (a, b, c) d -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT3 = compareFuncTyped liftPureT3
+comparePureArityT3 = compareGenArityT3 Pure
 
 comparePureArityT4 :: TypedNoNameScript (a, b, c, d) e -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT4 = compareFuncTyped liftPureT4
+comparePureArityT4 = compareGenArityT4 Pure
 
 comparePureArityT5 :: TypedNoNameScript (a, b, c, d, e) f -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT5 = compareFuncTyped liftPureT5
+comparePureArityT5 = compareGenArityT5 Pure
 
 comparePureArityT6 :: TypedNoNameScript (a, b, c, d, e, f) g -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT6 = compareFuncTyped liftPureT6
+comparePureArityT6 = compareGenArityT6 Pure
 
 comparePureArityT7 :: TypedNoNameScript (a, b, c, d, e, f, g) h -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT7 = compareFuncTyped liftPureT7
+comparePureArityT7 = compareGenArityT7 Pure
 
 comparePureArityT8 :: TypedNoNameScript (a, b, c, d, e, f, g, h) i -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT8 = compareFuncTyped liftPureT8
+comparePureArityT8 = compareGenArityT8 Pure
 
 comparePureArityT9 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i) j -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT9 = compareFuncTyped liftPureT9
+comparePureArityT9 = compareGenArityT9 Pure
 
 comparePureArityT10 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j) k -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT10 = compareFuncTyped liftPureT10
+comparePureArityT10 = compareGenArityT10 Pure
 
 comparePureArityT11 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k) l -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT11 = compareFuncTyped liftPureT11
+comparePureArityT11 = compareGenArityT11 Pure
 
 comparePureArityT12 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l) m -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT12 = compareFuncTyped liftPureT12
+comparePureArityT12 = compareGenArityT12 Pure
 
 comparePureArityT13 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m) n -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT13 = compareFuncTyped liftPureT13
+comparePureArityT13 = compareGenArityT13 Pure
 
 comparePureArityT14 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n) o -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT14 = compareFuncTyped liftPureT14
+comparePureArityT14 = compareGenArityT14 Pure
 
 comparePureArityT15 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) p -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT15 = compareFuncTyped liftPureT15
+comparePureArityT15 = compareGenArityT15 Pure
 
 comparePureArityT16 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) q -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT16 = compareFuncTyped liftPureT16
+comparePureArityT16 = compareGenArityT16 Pure
 
 comparePureArityT17 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q) r -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT17 = compareFuncTyped liftPureT17
+comparePureArityT17 = compareGenArityT17 Pure
 
 comparePureArityT18 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) s -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT18 = compareFuncTyped liftPureT18
+comparePureArityT18 = compareGenArityT18 Pure
 
 comparePureArityT19 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) t -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT19 = compareFuncTyped liftPureT19
+comparePureArityT19 = compareGenArityT19 Pure
 
 comparePureArityT20 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) u -> SourceCode -> IO (Either T.Text Executable)
-comparePureArityT20 = compareFuncTyped liftPureT20
+comparePureArityT20 = compareGenArityT20 Pure
 
-liftPureT1 :: FunctionName -> FnT a b
-liftPureT1 = liftFnT . mkFT1
 
-liftPureT2 :: FunctionName -> FnT (a,b) c
-liftPureT2 = liftFnT . mkFT2
 
-liftPureT3 :: FunctionName -> FnT (a,b,c) d
-liftPureT3 = liftFnT . mkFT3
 
-liftPureT4 :: FunctionName -> FnT (a,b,c,d) e
-liftPureT4 = liftFnT . mkFT4
 
-liftPureT5 :: FunctionName -> FnT (a,b,c,d,e) f
-liftPureT5 = liftFnT . mkFT5
 
-liftPureT6 :: FunctionName -> FnT (a,b,c,d,e,f) g
-liftPureT6 = liftFnT . mkFT6
+lambdaT1 :: FunctionName -> FnT a b
+lambdaT1 fname = FnT . pack $ [istr| \a   -> #{fname} a|] 
 
-liftPureT7 :: FunctionName -> FnT (a,b,c,d,e,f,g) h
-liftPureT7 = liftFnT . mkFT7
+lambdaT2 :: FunctionName -> FnT (a,b) c
+lambdaT2 fname = FnT . pack $ [istr| \(a, b) -> #{fname} a b|]
 
-liftPureT8 :: FunctionName -> FnT (a,b,c,d,e,f,g,h) i
-liftPureT8 = liftFnT . mkFT8
+lambdaT3 :: FunctionName -> FnT (a,b,c) d
+lambdaT3 fname = FnT . pack $ [istr| \(a, b, c) -> #{fname} a b c|]
 
-liftPureT9 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i) j
-liftPureT9 = liftFnT . mkFT9
+lambdaT4 :: FunctionName -> FnT (a,b,c,d) e
+lambdaT4 fname = FnT . pack $ [istr| \(a, b, c, d) -> #{fname} a b c d|]
 
-liftPureT10 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j) k
-liftPureT10 = liftFnT . mkFT10
+lambdaT5 :: FunctionName -> FnT (a,b,c,d,e) f
+lambdaT5 fname = FnT . pack $ [istr| \(a, b, c, d, e) -> #{fname} a b c d e|]
 
-liftPureT11 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k) l
-liftPureT11 = liftFnT . mkFT11
+lambdaT6 :: FunctionName -> FnT (a,b,c,d,e,f) g
+lambdaT6 fname = FnT . pack $ [istr| \(a, b, c, d, e, f) -> #{fname} a b c d e f|]
 
-liftPureT12 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l) m
-liftPureT12 = liftFnT . mkFT12
+lambdaT7 :: FunctionName -> FnT (a,b,c,d,e,f,g) h
+lambdaT7 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g) -> #{fname} a b c d e f g|]
 
-liftPureT13 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m) n
-liftPureT13 = liftFnT . mkFT13
+lambdaT8 :: FunctionName -> FnT (a,b,c,d,e,f,g,h) i
+lambdaT8 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h) -> #{fname} a b c d e f g h|]
 
-liftPureT14 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n) o
-liftPureT14 = liftFnT . mkFT14
+lambdaT9 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i) j
+lambdaT9 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i) -> #{fname} a b c d e f g h i|]
 
-liftPureT15 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) p
-liftPureT15 = liftFnT . mkFT15
+lambdaT10 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j) k
+lambdaT10 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j) -> #{fname} a b c d e f g h i j|]
 
-liftPureT16 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) q
-liftPureT16 = liftFnT . mkFT16
+lambdaT11 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k) l
+lambdaT11 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k) -> #{fname} a b c d e f g h i j k|]
 
-liftPureT17 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q) r
-liftPureT17 = liftFnT . mkFT17
+lambdaT12 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l) m
+lambdaT12 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l) -> #{fname} a b c d e f g h i j k l|]
 
-liftPureT18 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r) s
-liftPureT18 = liftFnT . mkFT18
+lambdaT13 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m) n
+lambdaT13 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m) -> #{fname} a b c d e f g h i j k l m|]
 
-liftPureT19 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s) t
-liftPureT19 = liftFnT . mkFT19
+lambdaT14 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n) o
+lambdaT14 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n) -> #{fname} a b c d e f g h i j k l m n|]
 
-liftPureT20 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t) u
-liftPureT20 = liftFnT . mkFT20
+lambdaT15 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) p
+lambdaT15 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) -> #{fname} a b c d e f g h i j k l m n o|]
 
-mkFT1 :: FunctionName -> FnT a b
-mkFT1 fname = FnT . pack $ [istr| \a   -> #{fname} a|] 
+lambdaT16 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) q
+lambdaT16 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) -> #{fname} a b c d e f g h i j k l m n o p|]
 
-mkFT2 :: FunctionName -> FnT (a,b) c
-mkFT2 fname = FnT . pack $ [istr| \(a, b) -> #{fname} a b|]
+lambdaT17 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q) r
+lambdaT17 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q) -> #{fname} a b c d e f g h i j k l m n o p q|]
 
-mkFT3 :: FunctionName -> FnT (a,b,c) d
-mkFT3 fname = FnT . pack $ [istr| \(a, b, c) -> #{fname} a b c|]
+lambdaT18 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r) s
+lambdaT18 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) -> #{fname} a b c d e f g h i j k l m n o p q r|]
 
-mkFT4 :: FunctionName -> FnT (a,b,c,d) e
-mkFT4 fname = FnT . pack $ [istr| \(a, b, c, d) -> #{fname} a b c d|]
+lambdaT19 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s) t
+lambdaT19 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) -> #{fname} a b c d e f g h i j k l m n o p q r s|]
 
-mkFT5 :: FunctionName -> FnT (a,b,c,d,e) f
-mkFT5 fname = FnT . pack $ [istr| \(a, b, c, d, e) -> #{fname} a b c d e|]
+lambdaT20 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t) u
+lambdaT20 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) -> #{fname} a b c d e f g h i j k l m n o p q r s t|]
 
-mkFT6 :: FunctionName -> FnT (a,b,c,d,e,f) g
-mkFT6 fname = FnT . pack $ [istr| \(a, b, c, d, e, f) -> #{fname} a b c d e f|]
+ 
 
-mkFT7 :: FunctionName -> FnT (a,b,c,d,e,f,g) h
-mkFT7 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g) -> #{fname} a b c d e f g|]
+ 
+-- hask> lift Pure f
+-- take a pure function and make it monadic or just leave it as is
+-- this comes into effect when writing the expression
+lift :: Purity -> FnT a b -> FnHKT a b
+lift arity = FnHKT arity . getFnT
 
-mkFT8 :: FunctionName -> FnT (a,b,c,d,e,f,g,h) i
-mkFT8 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h) -> #{fname} a b c d e f g h|]
 
-mkFT9 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i) j
-mkFT9 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i) -> #{fname} a b c d e f g h i|]
+-- Typed monadic actions of some arity
 
-mkFT10 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j) k
-mkFT10 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j) -> #{fname} a b c d e f g h i j|]
+-- compareMonadicArityT1
+--   :: TypedNoNameScript a b-> SourceCode -> IO (Either T.Text Executable)
+-- compareMonadicArityT1 = compareFuncTyped thing
 
-mkFT11 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k) l
-mkFT11 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k) -> #{fname} a b c d e f g h i j k|]
+-- thing :: FunctionName -> FnHKT a b
+-- thing = undefined
 
-mkFT12 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l) m
-mkFT12 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l) -> #{fname} a b c d e f g h i j k l|]
 
-mkFT13 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m) n
-mkFT13 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m) -> #{fname} a b c d e f g h i j k l m|]
+makeNames :: IO (T.Text,T.Text,T.Text)
+makeNames = do
+  testVarName <- ((<>) "t") <$> randomAlphaNumCamelCaseName 5
+  -- Must start with a Capital
+  moduleName <- ((<>) "M") <$> randomAlphaNumCamelCaseName 5
+  testFuncName <- ((<>) "f") <$> randomAlphaNumCamelCaseName 5
+  pure (testVarName, moduleName, testFuncName)
 
-mkFT14 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n) o
-mkFT14 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n) -> #{fname} a b c d e f g h i j k l m n|]
-
-mkFT15 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) p
-mkFT15 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) -> #{fname} a b c d e f g h i j k l m n o|]
-
-mkFT16 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) q
-mkFT16 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) -> #{fname} a b c d e f g h i j k l m n o p|]
-
-mkFT17 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q) r
-mkFT17 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q) -> #{fname} a b c d e f g h i j k l m n o p q|]
-
-mkFT18 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r) s
-mkFT18 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) -> #{fname} a b c d e f g h i j k l m n o p q r|]
-
-mkFT19 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s) t
-mkFT19 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) -> #{fname} a b c d e f g h i j k l m n o p q r s|]
-
-mkFT20 :: FunctionName -> FnT (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t) u
-mkFT20 fname = FnT . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) -> #{fname} a b c d e f g h i j k l m n o p q r s t|]
-
-
-
-comparePureArity1 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity1 = compareFunc liftPure1
-
-comparePureArity2 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity2 = compareFunc liftPure2
-
-comparePureArity3 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity3 = compareFunc liftPure3
-
-comparePureArity4 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity4 = compareFunc liftPure4
-
-comparePureArity5 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity5 = compareFunc liftPure5
-
-comparePureArity6 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity6 = compareFunc liftPure6
-
-comparePureArity7 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity7 = compareFunc liftPure7
-
-comparePureArity8 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity8 = compareFunc liftPure8
-
-comparePureArity9 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity9 = compareFunc liftPure9
-
-comparePureArity10 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity10 = compareFunc liftPure10
-
-comparePureArity11 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity11 = compareFunc liftPure11
-
-comparePureArity12 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity12 = compareFunc liftPure12
-
-comparePureArity13 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity13 = compareFunc liftPure13
-
-comparePureArity14 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity14 = compareFunc liftPure14
-
-comparePureArity15 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity15 = compareFunc liftPure15
-
-comparePureArity16 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity16 = compareFunc liftPure16
-
-comparePureArity17 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity17 = compareFunc liftPure17
-
-comparePureArity18 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity18 = compareFunc liftPure18
-
-comparePureArity19 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity19 = compareFunc liftPure19
-
-comparePureArity20 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-comparePureArity20 = compareFunc liftPure20
-
-compareMonadicArity1 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity1 = compareFunc mkF1
-
-compareMonadicArity2 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity2 = compareFunc mkF2
-
-compareMonadicArity3 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity3 = compareFunc mkF3
-
-compareMonadicArity4 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity4 = compareFunc mkF4
-
-compareMonadicArity5 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity5 = compareFunc mkF5
-
-compareMonadicArity6 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity6 = compareFunc mkF6
-
-compareMonadicArity7 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity7 = compareFunc mkF7
-
-compareMonadicArity8 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity8 = compareFunc mkF8
-
-compareMonadicArity9 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity9 = compareFunc mkF9
-
-compareMonadicArity10 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity10 = compareFunc mkF10
-
-compareMonadicArity11 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity11 = compareFunc mkF11
-
-compareMonadicArity12 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity12 = compareFunc mkF12
-
-compareMonadicArity13 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity13 = compareFunc mkF13
-
-compareMonadicArity14 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity14 = compareFunc mkF14
-
-compareMonadicArity15 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity15 = compareFunc mkF15
-
-compareMonadicArity16 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity16 = compareFunc mkF16
-
-compareMonadicArity17 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity17 = compareFunc mkF17
-
-compareMonadicArity18 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity18 = compareFunc mkF18
-
-compareMonadicArity19 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity19 = compareFunc mkF19
-
-compareMonadicArity20 :: NoNameScript -> SourceCode -> IO (Either T.Text Executable)
-compareMonadicArity20 = compareFunc mkF20
-
+compareFuncHKT 
+  :: forall a b.
+     (FunctionName -> FnHKT a b)
+  -- ^ Essentially, this means pick the arity of the problem
+  -> TypedNoNameScript a b
+  -- ^ The provided solution and input data as a haskell module
+  -> SourceCode
+  -- ^ User func name
+  -> IO (Either T.Text Executable)
+compareFuncHKT mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
+  (testVarName, moduleName, testFuncName) <- makeNames
+  
+  let
+    testLibScript :: Script
+    testLibScript = (getTypedNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName (TypeInfo Proxy Proxy)
+    locatedTestLib :: LocatedTestModule 
+    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+
+    settings_ = def
+    userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
+    -- TODO: pass ModuleName here
+    mainModule = genMakeMainComparativeTypedTestScriptHKT
+      mkFn
+      testVarName
+      (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
+      (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
+    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+    
+  pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
+
+
+-- Link and call genMakeMainComparativeTestScript with args to customize it
 compareFuncTyped
   :: forall a b.
      (FunctionName -> FnT a b)
@@ -494,11 +493,7 @@ compareFuncTyped
   -- ^ User func name
   -> IO (Either T.Text Executable)
 compareFuncTyped mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
-  testVarName <- ((<>) "t") <$> randomAlphaNumCamelCaseName 5
-  -- Must start with a Capital
-  moduleName <- ((<>) "M") <$> randomAlphaNumCamelCaseName 5
-  testFuncName <- ((<>) "f") <$> randomAlphaNumCamelCaseName 5
-  
+  (testVarName, moduleName, testFuncName) <- makeNames  
   let
     testLibScript :: Script
     testLibScript = (getTypedNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName (TypeInfo Proxy Proxy)
@@ -517,7 +512,7 @@ compareFuncTyped mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
     
   pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
 
-
+-- Link and call genMakeMainComparativeTestScript with args to customize it
 compareFunc
   :: (FunctionName -> Fn)
   -- ^ Essentially, this means pick the arity of the problem
@@ -527,11 +522,7 @@ compareFunc
   -- ^ User func name
   -> IO (Either T.Text Executable)
 compareFunc mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
-  testVarName <- ((<>) "t") <$> randomAlphaNumCamelCaseName 5
-  -- Must start with a Capital
-  moduleName <- ((<>) "M") <$> randomAlphaNumCamelCaseName 5
-  testFuncName <- ((<>) "f") <$> randomAlphaNumCamelCaseName 5
-  
+  (testVarName, moduleName, testFuncName) <- makeNames  
   let
     testLibScript :: Script
     testLibScript = (getNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName
@@ -550,6 +541,24 @@ compareFunc mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
     
   pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
 
+-- randomAlphaNumCamelCaseName :: Int -> IO T.Text
+-- randomAlphaNumCamelCaseName numWords = do
+--     words <- replicateM numWords randomWord
+--     pure $ T.concat $ zipWith capitalize [0..] words
+--   where
+--     alphaNum = ['a'..'z'] ++ ['0'..'9']
+--     randomWord :: IO T.Text
+--     randomWord = do
+--         len <- randomRIO (3, 8)
+--         chars <- replicateM len $ do
+--             idx <- randomRIO (0, length alphaNum - 1)
+--             pure $ alphaNum !! idx
+--         pure $ T.pack chars
+--     capitalize :: Int -> T.Text -> T.Text
+--     capitalize 0 w = w  -- first word stays lowercase
+--     capitalize _ w = case T.uncons w of
+--         Nothing -> w
+--         Just (c, rest) -> T.cons (toUpper c) rest
 randomAlphaNumCamelCaseName :: Int -> IO T.Text
 randomAlphaNumCamelCaseName numWords = do
     words <- replicateM numWords randomWord
@@ -564,12 +573,15 @@ randomAlphaNumCamelCaseName numWords = do
             pure $ alphaNum !! idx
         pure $ T.pack chars
     capitalize :: Int -> T.Text -> T.Text
-    capitalize 0 w = w  -- first word stays lowercase
-    capitalize _ w = case T.uncons w of
-        Nothing -> w
-        Just (c, rest) -> T.cons (toUpper c) rest
-   
+    capitalize n w
+      | n == 0    = w  -- first word stays lowercase
+      | otherwise = case T.uncons w of
+          Nothing -> w
+          Just (c, rest) -> T.cons (toUpper c) rest
+    
 type TestScript = Script
+
+
 -- Perhaps we can derive this func we pass as an arg?
 genMakeMainComparativeTestScript
   :: (FunctionName -> Fn)
@@ -584,6 +596,8 @@ import Control.Monad (mapM)
 #{showImportLine userModule}
 #{showImportLine testModule}
 
+
+
 --userF, solutionF 
 userF = #{getFn . mkF $ importName (getImportName userModule) <> "." <> fnameUser}
 solutionF = #{getFn . mkF $ importName (getImportName testModule) <> "." <> fnameCompare}
@@ -596,6 +610,7 @@ main = do
   print $ zipWith (==) valsUser valsOurSolution
 |]
 
+  
 -- Perhaps we can derive this func we pass as an arg?
 genMakeMainComparativeTypedTestScript
   :: (FunctionName -> FnT a b)
@@ -623,9 +638,69 @@ main = do
   inputs <- #{importName $ getImportName testModule}.#{testValueName} -- inputs :: (ToJSON a, FromJSON a) => a 
   valsUser <- mapM userF inputs
   valsOurSolution <- mapM solutionF inputs
+  -- TODO: should we add in a stripMetadata (for functions)?
   let x = zipWith3 (\outUser expec_ inp -> TryCodeResult inp outUser expec_ (outUser == expec_))  valsUser valsOurSolution inputs
   LBS.putStrLn $ Aeson.encode x 
 |]
+
+
+
+
+  
+-- compareFuncHKT 
+--   :: forall a b.
+--      (FunctionName -> FnHKT a b)
+--   -- ^ Essentially, this means pick the arity of the problem
+--   -> TypedNoNameScript a b
+--   -- ^ The provided solution and input data as a haskell module
+--   -> SourceCode
+--   -- ^ User func name
+--   -> IO (Either T.Text Executable)  
+-- Perhaps we can derive this func we pass as an arg?
+
+--makeFnHKT :: FnHKT a b -> 
+-- userF = #{showFnHKTExpression . mkF $ }
+
+showFnHKTExpression :: FnHKT a b -> T.Text
+showFnHKTExpression f = "userF = " <> ensureIO (purity f) "pure $" <> (getFnHKTLambda f)
+  where
+    ensureIO :: Purity -> T.Text -> T.Text
+    ensureIO b t = case b of
+      Impure -> ""
+      Pure -> t
+  
+  
+genMakeMainComparativeTypedTestScriptHKT
+  :: (FunctionName -> FnHKT a b)
+  -> VarName
+  -> (Import, FunctionName) -- UserModuleName -- In theory, we could directly get this from the Import type
+  -> (Import, FunctionName) -- TestModule     -- In theory, we could directly get this from the Import type
+  -> TestScript
+genMakeMainComparativeTypedTestScriptHKT mkF testValueName (userModule, fnameUser) (testModule, fnameCompare) = Script $ pack [istr|
+module Main where
+
+import Control.Monad (mapM)
+#{showImportLine userModule}
+#{showImportLine testModule}
+import qualified Data.ByteString.Lazy.Char8 as LBS
+import qualified Data.Aeson as Aeson
+import RunGhc.MakeTest
+
+userF = #{userF_expr}
+solutionF = #{solutionF_expr}
+
+-- Compare
+main :: IO ()
+main = do
+  inputs <- #{importName $ getImportName testModule}.#{testValueName}
+  valsUser <- mapM userF inputs
+  valsOurSolution <- mapM solutionF inputs
+  let x = zipWith3 (\outUser expec_ inp -> TryCodeResult inp outUser expec_ (outUser == expec_))  valsUser valsOurSolution inputs
+  LBS.putStrLn $ Aeson.encode x 
+|]
+  where 
+    userF_expr = showFnHKTExpression . mkF $ importName (getImportName userModule) <> "." <> fnameUser
+    solutionF_expr = showFnHKTExpression . mkF $ importName (getImportName testModule) <> "." <> fnameCompare
   
 newtype ImportName = ImportName { importName :: T.Text }
 getImportName :: Import -> ImportName
@@ -656,6 +731,16 @@ newtype TypedName a = TypedName { getTypedReference :: T.Text }
 -- writeHaskellTopLevelVar :: VarName -> Expression -> TypedName 
 
 data FnT a b = FnT { getFnT :: T.Text }
+
+data FnHKT a b = FnHKT
+  { purity :: Purity
+  , getFnHKTLambda :: T.Text
+  }
+
+
+
+-- eg f1 = "userF = " <> liftWhenPure f1 <> lambdaString
+
 
 newtype Fn = Fn { getFn :: T.Text }
 chainFn :: Fn -> Fn -> Fn
@@ -741,75 +826,7 @@ mkF19 fname = Fn . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, 
 mkF20 :: FunctionName -> Fn
 mkF20 fname = Fn . pack $ [istr| \(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) -> #{fname} a b c d e f g h i j k l m n o p q r s t|]
 
-liftPure1 :: FunctionName -> Fn
-liftPure1 = liftFn . mkF1
 
-liftPure2 :: FunctionName -> Fn
-liftPure2 = liftFn . mkF2
-
-liftPure3 :: FunctionName -> Fn
-liftPure3 = liftFn . mkF3
-
-liftPure4 :: FunctionName -> Fn
-liftPure4 = liftFn . mkF4
-
-liftPure5 :: FunctionName -> Fn
-liftPure5 = liftFn . mkF5
-
-liftPure6 :: FunctionName -> Fn
-liftPure6 = liftFn . mkF6
-
-liftPure7 :: FunctionName -> Fn
-liftPure7 = liftFn . mkF7
-
-liftPure8 :: FunctionName -> Fn
-liftPure8 = liftFn . mkF8
-
-liftPure9 :: FunctionName -> Fn
-liftPure9 = liftFn . mkF9
-
-liftPure10 :: FunctionName -> Fn
-liftPure10 = liftFn . mkF10
-
-liftPure11 :: FunctionName -> Fn
-liftPure11 = liftFn . mkF11
-
-liftPure12 :: FunctionName -> Fn
-liftPure12 = liftFn . mkF12
-
-liftPure13 :: FunctionName -> Fn
-liftPure13 = liftFn . mkF13
-
-liftPure14 :: FunctionName -> Fn
-liftPure14 = liftFn . mkF14
-
-liftPure15 :: FunctionName -> Fn
-liftPure15 = liftFn . mkF15
-
-liftPure16 :: FunctionName -> Fn
-liftPure16 = liftFn . mkF16
-
-liftPure17 :: FunctionName -> Fn
-liftPure17 = liftFn . mkF17
-
-liftPure18 :: FunctionName -> Fn
-liftPure18 = liftFn . mkF18
-
-liftPure19 :: FunctionName -> Fn
-liftPure19 = liftFn . mkF19
-
-liftPure20 :: FunctionName -> Fn
-liftPure20 = liftFn . mkF20
-
-
--- A set of functions
-data TypeInfo a b = TypeInfo
-  { _typesIn :: a
-  , _typeOut :: b
-  }
-type T a = Proxy a
-type_ :: T a
-type_ = Proxy
 
 arity1 :: T a -> T a
 arity1 = id
