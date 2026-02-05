@@ -644,7 +644,7 @@ main = do
 |]
 
 showFnHKTExpression :: FnHKT a b -> T.Text
-showFnHKTExpression f = ensureIO (purity f) "pure $" <> (getFnHKTLambda f)
+showFnHKTExpression f = ensureIO (purity f) "pure ." <> (getFnHKTLambda f)
   where
     ensureIO :: Purity -> T.Text -> T.Text
     ensureIO b t = case b of
