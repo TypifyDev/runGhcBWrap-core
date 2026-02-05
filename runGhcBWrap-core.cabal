@@ -22,6 +22,9 @@ library
         RunGhc.UserInput
         RunGhc.TrivialBuilders
         RunGhc.MakeTest
+        RunGhc.MakeTest.TypeSig
+        RunGhc.MakeTest.HKTs
+        RunGhc.MakeTest.FFI
         RunGhc.MakeExe
         RunGhc.Executable        
         RunGhc.Locate
