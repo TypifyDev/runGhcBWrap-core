@@ -643,26 +643,8 @@ main = do
   LBS.putStrLn $ Aeson.encode x 
 |]
 
-
-
-
-  
--- compareFuncHKT 
---   :: forall a b.
---      (FunctionName -> FnHKT a b)
---   -- ^ Essentially, this means pick the arity of the problem
---   -> TypedNoNameScript a b
---   -- ^ The provided solution and input data as a haskell module
---   -> SourceCode
---   -- ^ User func name
---   -> IO (Either T.Text Executable)  
--- Perhaps we can derive this func we pass as an arg?
-
---makeFnHKT :: FnHKT a b -> 
--- userF = #{showFnHKTExpression . mkF $ }
-
 showFnHKTExpression :: FnHKT a b -> T.Text
-showFnHKTExpression f = "userF = " <> ensureIO (purity f) "pure $" <> (getFnHKTLambda f)
+showFnHKTExpression f = ensureIO (purity f) "pure $" <> (getFnHKTLambda f)
   where
     ensureIO :: Purity -> T.Text -> T.Text
     ensureIO b t = case b of
