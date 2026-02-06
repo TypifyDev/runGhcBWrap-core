@@ -675,6 +675,7 @@ solutionF = #{solutionF_expr}
 main :: IO ()
 main = do
   inputs <- #{importName $ getImportName testModule}.#{testValueName}
+  -- How can we do random inputs?
   valsUser <- mapM userF inputs
   valsOurSolution <- mapM solutionF inputs
   let x = zipWith3 (\outUser expec_ inp -> TryCodeResult inp outUser expec_ (outUser == expec_))  valsUser valsOurSolution inputs

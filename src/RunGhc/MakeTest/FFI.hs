@@ -170,5 +170,5 @@ type family RequireValid' (xs :: [Slot]) (conflict :: Maybe (Nat, Type, Type)) :
     )
 
 type family UnwrapIOProxy (a :: Type) :: Type where
-  UnwrapIOProxy (m a) = a      -- IO a -> a, Maybe a -> a, [] a -> a
+  UnwrapIOProxy (IO a) = a      -- IO a -> a, Maybe a -> a, [] a -> a
   UnwrapIOProxy a     = a      -- Int -> Int, Bool -> Bool
