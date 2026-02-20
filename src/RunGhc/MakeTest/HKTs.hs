@@ -182,6 +182,11 @@ instance (ReifySlot x, ReifySlots xs) => ReifySlots (x ': xs) where
   reifyUser _ = slotUser (Proxy @x) : reifyUser (Proxy @xs)
   reifyTest _ = slotTest (Proxy @x) : reifyTest (Proxy @xs)
 
+-- List of tuples with fixed left and variable right: [(Int, a)]
+type App1ListTupleR (l :: Type) (n :: Nat) (t :: Type) =
+  'MkSlot
+    ('TApp ('TCon1 []) ('TApp ('TApp ('TCon2 (,)) ('TConT l)) ('TVar n)))
+    [(l, t)]
 --------------------------------------------------------------------------------
 -- Reify Constraint
 --------------------------------------------------------------------------------
