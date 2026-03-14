@@ -30,3 +30,17 @@ library
         RunGhc.Locate
         RunGhc.LocatedModule               
         RunGhc.SystemModule
+
+test-suite runghc-core-tests
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  build-depends:
+      aeson
+    , base
+    , hspec
+    , runGhcBWrap-core
+  other-modules:
+      TypeSigSpec
+      HKTsSpec
+      FFISpec
