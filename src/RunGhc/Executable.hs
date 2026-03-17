@@ -22,6 +22,16 @@ data Executable = Executable
 instance ToJSON Executable
 instance FromJSON Executable
 
+-- | An Executable with explicit separation of untrusted (user) modules.
+-- Used by runHaskellFilesInSandbox to compile user modules in isolation
+-- before writing trusted modules, preventing TH sandbox escapes.
+data SandboxedExecutable = SandboxedExecutable
+  { _sandboxedExe :: Executable
+  , _untrustedModules :: [LocatedModule]
+  } deriving Generic
+instance ToJSON SandboxedExecutable
+instance FromJSON SandboxedExecutable
+
 data ExecutableWithDeps = ExecutableWithDeps
   { _exe :: Executable
   , _packages :: [PackageName]
