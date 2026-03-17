@@ -108,3 +108,35 @@ addSystemLibraryToExecutable (LocatedTestModule locs) exe = Executable (_main ex
 addSystemLibrariesToExecutable :: [LocatedModule] -> Executable -> Executable
 addSystemLibrariesToExecutable locs exe = Executable (_main exe) $ locs <> (_library exe)
 
+-- | Convert an Executable to a SandboxedExecutable with no untrusted modules
+toSandboxedExecutable :: Executable -> SandboxedExecutable
+toSandboxedExecutable exe = SandboxedExecutable exe []
+
+-- | Convert an Executable to a SandboxedExecutable, treating all _library
+-- modules as untrusted. Useful when the Executable was built with user code
+-- in _library (e.g. from comparePureArity / toExe).
+sandboxAllLibrary :: Executable -> SandboxedExecutable
+sandboxAllLibrary exe = SandboxedExecutable
+  { _sandboxedExe = Executable { _main = _main exe, _library = [] }
+  , _untrustedModules = _library exe
+  }
+
+-- | Add an untrusted (user) module to a SandboxedExecutable.
+-- The module is added to _untrustedModules and imported by _main.
+addUntrustedModule :: LocatedUserModule -> SandboxedExecutable -> SandboxedExecutable
+addUntrustedModule (LocatedUserModule loc) sandboxed =
+  SandboxedExecutable
+    (Executable (addImports (Imports [toSimpleImport $ getPathSegments loc]) (_main innerExe)) (_library innerExe))
+    (loc : _untrustedModules sandboxed)
+  where innerExe = _sandboxedExe sandboxed
+
+-- | Add a trusted (system) library to a SandboxedExecutable
+addSystemLibraryToSandboxedExecutable :: LocatedTestModule -> SandboxedExecutable -> SandboxedExecutable
+addSystemLibraryToSandboxedExecutable (LocatedTestModule locs) sandboxed =
+  sandboxed { _sandboxedExe = addSystemLibraryToExecutable (LocatedTestModule locs) (_sandboxedExe sandboxed) }
+
+-- | Add multiple trusted libraries to a SandboxedExecutable
+addSystemLibrariesToSandboxedExecutable :: [LocatedModule] -> SandboxedExecutable -> SandboxedExecutable
+addSystemLibrariesToSandboxedExecutable locs sandboxed =
+  sandboxed { _sandboxedExe = addSystemLibrariesToExecutable locs (_sandboxedExe sandboxed) }
+

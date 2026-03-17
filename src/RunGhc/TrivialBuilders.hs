@@ -19,12 +19,25 @@ withF
   -> (FunctionName -> Script)
   -> T.Text
   -> Either T.Text Executable
-withF fname mkScript userScript = 
+withF fname mkScript userScript =
   Right $ toExe userModule testScript
   where
     userModule = mkUserModule' settings_ userScript
-    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript fname 
+    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript fname
     settings_ = def
+
+withFSandboxed
+  :: FunctionName
+  -> (FunctionName -> Script)
+  -> T.Text
+  -> Either T.Text SandboxedExecutable
+withFSandboxed fname mkScript userScript =
+  Right $ toSandboxedExe userModule testScript
+  where
+    userModule = mkUserModule' settings_ userScript
+    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript fname
+    settings_ = def
+
 runF :: FunctionName -> T.Text -> Either T.Text Executable
 runF fname userScript =
   Right $ toExe userModule testScript
@@ -32,8 +45,20 @@ runF fname userScript =
     userModule = mkUserModule' settings_ userScript
     testScript = simpleExeFromFunctionNameAsLib fname (getLocatedUserModule userModule)
     settings_ = def
+
+runFSandboxed :: FunctionName -> T.Text -> Either T.Text SandboxedExecutable
+runFSandboxed fname userScript =
+  Right $ toSandboxedExe userModule testScript
+  where
+    userModule = mkUserModule' settings_ userScript
+    testScript = simpleExeFromFunctionNameAsLib fname (getLocatedUserModule userModule)
+    settings_ = def
+
 runMain :: T.Text -> Either T.Text Executable
 runMain = runF "main"
+
+runMainSandboxed :: T.Text -> Either T.Text SandboxedExecutable
+runMainSandboxed = runFSandboxed "main"
 
 runMainHs :: T.Text -> Either T.Text Executable
 runMainHs = Right . toSingleModuleExe . locate [PathSegment "Main"] . Script 
@@ -50,11 +75,24 @@ withSymbols
   -> (args -> Script)
   -> T.Text
   -> Either T.Text Executable
-withSymbols symbols mkScript userScript = 
+withSymbols symbols mkScript userScript =
   Right $ toExe userModule testScript
   where
     userModule = mkUserModule' settings_ userScript
-    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript symbols 
+    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript symbols
+    settings_ = def
+
+withSymbolsSandboxed
+  :: Qualifiable args
+  => args
+  -> (args -> Script)
+  -> T.Text
+  -> Either T.Text SandboxedExecutable
+withSymbolsSandboxed symbols mkScript userScript =
+  Right $ toSandboxedExe userModule testScript
+  where
+    userModule = mkUserModule' settings_ userScript
+    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript symbols
     settings_ = def
 
 mkSelfTestedExecutable :: LocatedUserModule -> Executable
@@ -73,6 +111,15 @@ addUserLibraryToExecutableQualified qname (LocatedUserModule loc) exe =
   (addImports (Imports [toQualifiedImport qname $ getPathSegments loc]) (_main exe))
   [loc]
 
+addUntrustedModuleQualified :: T.Text -> LocatedUserModule -> SandboxedExecutable -> SandboxedExecutable
+addUntrustedModuleQualified qname (LocatedUserModule loc) sandboxed =
+  SandboxedExecutable
+    (Executable
+      (addImports (Imports [toQualifiedImport qname $ getPathSegments loc]) (_main innerExe))
+      (_library innerExe))
+    (loc : _untrustedModules sandboxed)
+  where innerExe = _sandboxedExe sandboxed
+
 -- Assumes user script at UserModule.hs and testing script at Main.hs
 -- This is useful as sometimes we want to allow the user and tester
 -- to write arbitrary scripts. Although we as the tester, should heavily rely on the Expression builders
@@ -82,6 +129,13 @@ unsafeMkExecutable userScript testScript =
   (FromLocatedScript (LocatedScript [PathSegment "Main"] testScript))
   [(FromLocatedScript (LocatedScript [PathSegment "UserModule"] userScript))
   ]
+
+unsafeMkSandboxedExecutable :: Script -> Script -> SandboxedExecutable
+unsafeMkSandboxedExecutable userScript testScript =
+  SandboxedExecutable
+  { _sandboxedExe = Executable (FromLocatedScript (LocatedScript [PathSegment "Main"] testScript)) []
+  , _untrustedModules = [FromLocatedScript (LocatedScript [PathSegment "UserModule"] userScript)]
+  }
 --unsafeMkExecutable = 
 newtype ImportName = ImportName T.Text
 
@@ -92,6 +146,14 @@ mkSimpleExecutable
   -> Executable
 mkSimpleExecutable (ImportName qname) (locUser) (LocatedMainModule locMain) =
   addUserLibraryToExecutableQualified qname locUser $ mkExecutableNoLibrary locMain
+
+mkSimpleSandboxedExecutable
+  :: ImportName
+  -> LocatedUserModule
+  -> LocatedMainModule
+  -> SandboxedExecutable
+mkSimpleSandboxedExecutable (ImportName qname) locUser (LocatedMainModule locMain) =
+  addUntrustedModuleQualified qname locUser $ toSandboxedExecutable $ mkExecutableNoLibrary locMain
 
 asIs :: Script -> Executable
 asIs scr =

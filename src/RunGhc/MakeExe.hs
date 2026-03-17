@@ -39,6 +39,14 @@ toExe (LocatedUserModule locUser) (LocatedTestModule locTest) =
   , _library = [locUser]
   }
 
+-- | Like toExe but user module goes to _untrustedModules for TH isolation
+toSandboxedExe :: LocatedUserModule -> LocatedTestModule -> SandboxedExecutable
+toSandboxedExe (LocatedUserModule locUser) (LocatedTestModule locTest) =
+  SandboxedExecutable
+  { _sandboxedExe = Executable { _main = locTest, _library = [] }
+  , _untrustedModules = [locUser]
+  }
+
 defaultHeadMainModule :: (Imports, Extensions)
 defaultHeadMainModule =
   ( (Imports
@@ -171,6 +179,19 @@ mkMainExeWithDefaultHead userModule symbols mkExpr =
   , _library = [userModule]
   }
 
+-- | Like mkMainExeWithDefaultHead but user module goes to _untrustedModules
+mkSandboxedMainExeWithDefaultHead
+  :: Qualifiable symbols
+  => LocatedModule
+  -> symbols
+  -> (symbols -> Expressions)
+  -> SandboxedExecutable
+mkSandboxedMainExeWithDefaultHead userModule symbols mkExpr =
+  SandboxedExecutable
+  { _sandboxedExe = Executable { _main = mkMainWithDefaultHead userModule symbols mkExpr, _library = [] }
+  , _untrustedModules = [userModule]
+  }
+
 
 -- | callFunction "f" (LocatedModule{..})
 -- where f is implicitly :: IO ()
@@ -183,8 +204,23 @@ callFunction' fname (LocatedUserModule loc) mkExpr = Executable mod [loc]
   where
     qname = "UserModule"
     importLine = showImportLine $ localQualifiedImport qname loc --Import Nothing [getPathSegments loc
-    toScript = Script . getExpressions 
-    mod = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname --Script    
+    toScript = Script . getExpressions
+    mod = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname --Script
+
+-- | Like callFunction' but user module goes to _untrustedModules
+callFunctionSandboxed
+  :: FunctionName
+  -> LocatedUserModule
+  -> (FunctionName -> Expressions)
+  -> SandboxedExecutable
+callFunctionSandboxed fname (LocatedUserModule loc) mkExpr =
+  SandboxedExecutable
+  { _sandboxedExe = Executable mod []
+  , _untrustedModules = [loc]
+  }
+  where
+    toScript = Script . getExpressions
+    mod = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname
 
   
 class Qualifiable a where

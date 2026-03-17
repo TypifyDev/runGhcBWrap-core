@@ -121,6 +121,17 @@ toCompareExe (LocatedUserModule locUser) (LocatedTestModule locTestLib) (Located
   , _library = [locUser, locTestLib]
   }
 
+toCompareSandboxedExe
+  :: LocatedUserModule -- User (UNTRUSTED)
+  -> LocatedTestModule -- System: Compare Against (TRUSTED)
+  -> LocatedTestModule -- Run Compare (TRUSTED, becomes _main)
+  -> SandboxedExecutable
+toCompareSandboxedExe (LocatedUserModule locUser) (LocatedTestModule locTestLib) (LocatedTestModule locTestMain) =
+  SandboxedExecutable
+  { _sandboxedExe = Executable { _main = locTestMain, _library = [locTestLib] }
+  , _untrustedModules = [locUser]
+  }
+
 -- There's no core reason we need to have the names be the same
 --
 -- Also the only name we ever need to actually know (prior to runtime generation of the exe)
@@ -217,6 +228,65 @@ compareGenArityT19 purity = compareFuncHKT (lift purity . lambdaT19)
 compareGenArityT20 :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) u -> SourceCode -> IO (Either T.Text Executable)
 compareGenArityT20 purity = compareFuncHKT (lift purity . lambdaT20)
 
+compareGenArityT1Sandboxed :: Purity -> TypedNoNameScript a b -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT1Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT1)
+
+compareGenArityT2Sandboxed :: Purity -> TypedNoNameScript (a, b) c -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT2Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT2)
+
+compareGenArityT3Sandboxed :: Purity -> TypedNoNameScript (a, b, c) d -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT3Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT3)
+
+compareGenArityT4Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d) e -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT4Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT4)
+
+compareGenArityT5Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e) f -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT5Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT5)
+
+compareGenArityT6Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f) g -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT6Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT6)
+
+compareGenArityT7Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g) h -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT7Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT7)
+
+compareGenArityT8Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h) i -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT8Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT8)
+
+compareGenArityT9Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i) j -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT9Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT9)
+
+compareGenArityT10Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j) k -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT10Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT10)
+
+compareGenArityT11Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k) l -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT11Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT11)
+
+compareGenArityT12Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l) m -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT12Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT12)
+
+compareGenArityT13Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m) n -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT13Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT13)
+
+compareGenArityT14Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n) o -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT14Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT14)
+
+compareGenArityT15Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) p -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT15Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT15)
+
+compareGenArityT16Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) q -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT16Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT16)
+
+compareGenArityT17Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q) r -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT17Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT17)
+
+compareGenArityT18Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) s -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT18Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT18)
+
+compareGenArityT19Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) t -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT19Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT19)
+
+compareGenArityT20Sandboxed :: Purity -> TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) u -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareGenArityT20Sandboxed purity = compareFuncHKTSandboxed (lift purity . lambdaT20)
 
 
 -- Is there a better way to say "This is from IO a but we know that a will be printed and decoded as FromJSON a
@@ -297,6 +367,66 @@ compareMonadicArityT19 nnScript srcCode = compareGenArityT19 Impure (handleMonad
 compareMonadicArityT20 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q, r, s, t) (m u) -> SourceCode -> IO (Either T.Text Executable)
 compareMonadicArityT20 nnScript srcCode = compareGenArityT20 Impure (handleMonadicOutputType nnScript) srcCode
 
+compareMonadicArityT1Sandboxed :: TypedNoNameScript a            (m b) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT1Sandboxed  nnScript srcCode = compareGenArityT1Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT2Sandboxed :: TypedNoNameScript (a, b)        (m c) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT2Sandboxed  nnScript srcCode = compareGenArityT2Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT3Sandboxed :: TypedNoNameScript (a, b, c)      (m d) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT3Sandboxed  nnScript srcCode = compareGenArityT3Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT4Sandboxed :: TypedNoNameScript (a, b, c, d)    (m e) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT4Sandboxed  nnScript srcCode = compareGenArityT4Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT5Sandboxed :: TypedNoNameScript (a, b, c, d, e)  (m f) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT5Sandboxed  nnScript srcCode = compareGenArityT5Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT6Sandboxed :: TypedNoNameScript (a, b, c, d, e, f) (m g) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT6Sandboxed  nnScript srcCode = compareGenArityT6Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT7Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g) (m h) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT7Sandboxed  nnScript srcCode = compareGenArityT7Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT8Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h) (m i) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT8Sandboxed  nnScript srcCode = compareGenArityT8Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT9Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i) (m j) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT9Sandboxed  nnScript srcCode = compareGenArityT9Sandboxed  Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT10Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j) (m k) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT10Sandboxed nnScript srcCode = compareGenArityT10Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT11Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k) (m l) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT11Sandboxed nnScript srcCode = compareGenArityT11Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT12Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l) (m m1) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT12Sandboxed nnScript srcCode = compareGenArityT12Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT13Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1) (m n) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT13Sandboxed nnScript srcCode = compareGenArityT13Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT14Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n) (m o) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT14Sandboxed nnScript srcCode = compareGenArityT14Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT15Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o) (m p) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT15Sandboxed nnScript srcCode = compareGenArityT15Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT16Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p) (m q) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT16Sandboxed nnScript srcCode = compareGenArityT16Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT17Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q) (m r) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT17Sandboxed nnScript srcCode = compareGenArityT17Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT18Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q, r) (m s) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT18Sandboxed nnScript srcCode = compareGenArityT18Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT19Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q, r, s) (m t) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT19Sandboxed nnScript srcCode = compareGenArityT19Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
+compareMonadicArityT20Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m1, n, o, p, q, r, s, t) (m u) -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+compareMonadicArityT20Sandboxed nnScript srcCode = compareGenArityT20Sandboxed Impure (handleMonadicOutputType nnScript) srcCode
+
 
 comparePureArityT1 :: TypedNoNameScript a b -> SourceCode -> IO (Either T.Text Executable)
 comparePureArityT1 = compareGenArityT1 Pure
@@ -357,6 +487,66 @@ comparePureArityT19 = compareGenArityT19 Pure
 
 comparePureArityT20 :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) u -> SourceCode -> IO (Either T.Text Executable)
 comparePureArityT20 = compareGenArityT20 Pure
+
+comparePureArityT1Sandboxed :: TypedNoNameScript a b -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT1Sandboxed = compareGenArityT1Sandboxed Pure
+
+comparePureArityT2Sandboxed :: TypedNoNameScript (a, b) c -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT2Sandboxed = compareGenArityT2Sandboxed Pure
+
+comparePureArityT3Sandboxed :: TypedNoNameScript (a, b, c) d -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT3Sandboxed = compareGenArityT3Sandboxed Pure
+
+comparePureArityT4Sandboxed :: TypedNoNameScript (a, b, c, d) e -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT4Sandboxed = compareGenArityT4Sandboxed Pure
+
+comparePureArityT5Sandboxed :: TypedNoNameScript (a, b, c, d, e) f -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT5Sandboxed = compareGenArityT5Sandboxed Pure
+
+comparePureArityT6Sandboxed :: TypedNoNameScript (a, b, c, d, e, f) g -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT6Sandboxed = compareGenArityT6Sandboxed Pure
+
+comparePureArityT7Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g) h -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT7Sandboxed = compareGenArityT7Sandboxed Pure
+
+comparePureArityT8Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h) i -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT8Sandboxed = compareGenArityT8Sandboxed Pure
+
+comparePureArityT9Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i) j -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT9Sandboxed = compareGenArityT9Sandboxed Pure
+
+comparePureArityT10Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j) k -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT10Sandboxed = compareGenArityT10Sandboxed Pure
+
+comparePureArityT11Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k) l -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT11Sandboxed = compareGenArityT11Sandboxed Pure
+
+comparePureArityT12Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l) m -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT12Sandboxed = compareGenArityT12Sandboxed Pure
+
+comparePureArityT13Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m) n -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT13Sandboxed = compareGenArityT13Sandboxed Pure
+
+comparePureArityT14Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n) o -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT14Sandboxed = compareGenArityT14Sandboxed Pure
+
+comparePureArityT15Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) p -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT15Sandboxed = compareGenArityT15Sandboxed Pure
+
+comparePureArityT16Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) q -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT16Sandboxed = compareGenArityT16Sandboxed Pure
+
+comparePureArityT17Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q) r -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT17Sandboxed = compareGenArityT17Sandboxed Pure
+
+comparePureArityT18Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) s -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT18Sandboxed = compareGenArityT18Sandboxed Pure
+
+comparePureArityT19Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) t -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT19Sandboxed = compareGenArityT19Sandboxed Pure
+
+comparePureArityT20Sandboxed :: TypedNoNameScript (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) u -> SourceCode -> IO (Either T.Text SandboxedExecutable)
+comparePureArityT20Sandboxed = compareGenArityT20Sandboxed Pure
 
 
 
@@ -481,6 +671,32 @@ compareFuncHKT mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
     
   pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
 
+compareFuncHKTSandboxed
+  :: forall a b.
+     (FunctionName -> FnHKT a b)
+  -> TypedNoNameScript a b
+  -> SourceCode
+  -> IO (Either T.Text SandboxedExecutable)
+compareFuncHKTSandboxed mkFn mkScript sourceCode = do
+  (testVarName, moduleName, testFuncName) <- makeNames
+
+  let
+    testLibScript :: Script
+    testLibScript = (getTypedNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName (TypeInfo Proxy Proxy)
+    locatedTestLib :: LocatedTestModule
+    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+
+    settings_ = def
+    userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
+    mainModule = genMakeMainComparativeTypedTestScriptHKT
+      mkFn
+      testVarName
+      (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
+      (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
+    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+
+  pure $ Right $ toCompareSandboxedExe userModule locatedTestLib locatedMainModule
+
 
 -- Link and call genMakeMainComparativeTestScript with args to customize it
 compareFuncTyped
@@ -512,6 +728,31 @@ compareFuncTyped mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
     
   pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
 
+compareFuncTypedSandboxed
+  :: forall a b.
+     (FunctionName -> FnT a b)
+  -> TypedNoNameScript a b
+  -> SourceCode
+  -> IO (Either T.Text SandboxedExecutable)
+compareFuncTypedSandboxed mkFn mkScript sourceCode = do
+  (testVarName, moduleName, testFuncName) <- makeNames
+  let
+    testLibScript :: Script
+    testLibScript = (getTypedNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName (TypeInfo Proxy Proxy)
+    locatedTestLib :: LocatedTestModule
+    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+
+    settings_ = def
+    userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
+    mainModule = genMakeMainComparativeTypedTestScript
+      mkFn
+      testVarName
+      (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
+      (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
+    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+
+  pure $ Right $ toCompareSandboxedExe userModule locatedTestLib locatedMainModule
+
 -- Link and call genMakeMainComparativeTestScript with args to customize it
 compareFunc
   :: (FunctionName -> Fn)
@@ -540,6 +781,30 @@ compareFunc mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
     locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
     
   pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
+
+compareFuncSandboxed
+  :: (FunctionName -> Fn)
+  -> NoNameScript
+  -> SourceCode
+  -> IO (Either T.Text SandboxedExecutable)
+compareFuncSandboxed mkFn mkScript sourceCode = do
+  (testVarName, moduleName, testFuncName) <- makeNames
+  let
+    testLibScript :: Script
+    testLibScript = (getNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName
+    locatedTestLib :: LocatedTestModule
+    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+
+    settings_ = def
+    userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
+    mainModule = genMakeMainComparativeTestScript
+      mkFn
+      testVarName
+      (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
+      (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
+    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+
+  pure $ Right $ toCompareSandboxedExe userModule locatedTestLib locatedMainModule
 
 -- randomAlphaNumCamelCaseName :: Int -> IO T.Text
 -- randomAlphaNumCamelCaseName numWords = do
