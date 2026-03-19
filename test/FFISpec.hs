@@ -438,3 +438,44 @@ spec = describe "RunGhc.MakeTest.FFI" $ do
     it "output with App1" $
       typeRep (Proxy :: Proxy (SlotType (OutputSlot '[Fix Int, App1 [] 0 Bool])))
         `shouldBe` typeRep (Proxy :: Proxy [Bool])
+
+  ---------------------------------------------------------------------------
+  -- toSample type-safe sample creation
+  ---------------------------------------------------------------------------
+  describe "toSample type-safe sample creation" $ do
+    it "Fix Int -> Fix Bool (arity 1)" $ do
+      let sig = Proxy @('MkSig '[] '[Fix Int, Fix Bool])
+      toSample sig (42 :: Int) True `shouldBe` ("42", "True")
+
+    it "Fix Int -> Fix Int -> Fix Int (arity 2)" $ do
+      let sig = Proxy @('MkSig '[] '[Fix Int, Fix Int, Fix Int])
+      toSample sig (3 :: Int, 5 :: Int) (8 :: Int) `shouldBe` ("(3,5)", "8")
+
+    it "Var 0 Int -> Var 0 Int -> Var 0 Int (CC1-style with constraint)" $ do
+      let sig = Proxy @('MkSig '[ 'Cst Num 0] '[Var 0 Int, Var 0 Int, Var 0 Int])
+      toSample sig (3 :: Int, 5 :: Int) (8 :: Int) `shouldBe` ("(3,5)", "8")
+
+    it "Fix [(Char,Int)] -> Fix [(Char,String)] (CC45-style)" $ do
+      let sig = Proxy @('MkSig '[] '[Fix [(Char,Int)], Fix [(Char,String)]])
+      let input = [('a',5),('b',2)] :: [(Char,Int)]
+      let output = [('a',"0"),('b',"10")] :: [(Char,String)]
+      toSampleInput sig input `shouldBe` show input
+      toSampleOutput sig output `shouldBe` show output
+
+    it "App1 [] 0 Int -> Fix Int (list input)" $ do
+      let sig = Proxy @('MkSig '[] '[App1 [] 0 Int, Fix Int])
+      toSample sig [1,2,3 :: Int] (6 :: Int) `shouldBe` ("[1,2,3]", "6")
+
+    it "Fix Int -> Fix Int -> Fix Int -> Fix Int (arity 3)" $ do
+      let sig = Proxy @('MkSig '[] '[Fix Int, Fix Int, Fix Int, Fix Int])
+      toSample sig (1 :: Int, 2 :: Int, 3 :: Int) (6 :: Int) `shouldBe` ("(1,2,3)", "6")
+
+    it "Fix Int -> Fix [String] (CC44-style)" $ do
+      let sig = Proxy @('MkSig '[] '[Fix Int, Fix [String]])
+      toSample sig (3 :: Int) (["000","001","010"] :: [String])
+        `shouldBe` ("3", show ["000","001","010" :: String])
+
+    it "App1 Maybe 0 Int -> Fix Int" $ do
+      let sig = Proxy @('MkSig '[] '[App1 Maybe 0 Int, Fix Int])
+      toSample sig (Just 42 :: Maybe Int) (42 :: Int) `shouldBe` ("Just 42", "42")
+      toSample sig (Nothing :: Maybe Int) (0 :: Int) `shouldBe` ("Nothing", "0")
