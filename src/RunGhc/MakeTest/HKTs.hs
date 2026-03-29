@@ -10,6 +10,7 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE StandaloneKindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module RunGhc.MakeTest.HKTs where
 
@@ -155,19 +156,51 @@ instance {-# OVERLAPPABLE #-} (ReifyTyExpr f, ReifyTyExpr x) => ReifyTyExpr ('TA
     in fStr ++ " " ++ xWrapped
 
 --------------------------------------------------------------------------------
--- Reify Slot
+-- SigView: kind-level parameterization for sig rendering
+--------------------------------------------------------------------------------
+
+data SigView = Poly | Concrete
+
+--------------------------------------------------------------------------------
+-- ReifySlotAs: kind-level parameterized slot rendering
+--------------------------------------------------------------------------------
+
+class ReifySlotAs (v :: SigView) (s :: Slot) where
+  slotAs :: Proxy v -> Proxy s -> String
+
+instance ReifyTyExpr e => ReifySlotAs 'Poly ('MkSlot e t) where
+  slotAs _ _ = reifyTyExprUser (Proxy @e)
+
+instance Typeable t => ReifySlotAs 'Concrete ('MkSlot e t) where
+  slotAs _ _ = show (typeRep (Proxy @t))
+
+--------------------------------------------------------------------------------
+-- ReifySlotsAs: kind-level parameterized slot list rendering
+--------------------------------------------------------------------------------
+
+class ReifySlotsAs (v :: SigView) (xs :: [Slot]) where
+  reifySlotsAs :: Proxy v -> Proxy xs -> [String]
+
+instance ReifySlotsAs v '[] where
+  reifySlotsAs _ _ = []
+
+instance (ReifySlotAs v x, ReifySlotsAs v xs) => ReifySlotsAs v (x ': xs) where
+  reifySlotsAs pv _ = slotAs pv (Proxy @x) : reifySlotsAs pv (Proxy @xs)
+
+--------------------------------------------------------------------------------
+-- Reify Slot (backward compat, defined via ReifySlotAs)
 --------------------------------------------------------------------------------
 
 class ReifySlot (s :: Slot) where
   slotUser :: Proxy s -> String
   slotTest :: Proxy s -> String
 
-instance (ReifyTyExpr e, Typeable t) => ReifySlot ('MkSlot e t) where
-  slotUser _ = reifyTyExprUser (Proxy @e)
-  slotTest _ = show (typeRep (Proxy @t))
+instance (ReifySlotAs 'Poly s, ReifySlotAs 'Concrete s) => ReifySlot s where
+  slotUser = slotAs (Proxy @'Poly)
+  slotTest = slotAs (Proxy @'Concrete)
 
 --------------------------------------------------------------------------------
--- Reify Slot list
+-- Reify Slot list (backward compat, defined via ReifySlotsAs)
 --------------------------------------------------------------------------------
 
 class ReifySlots (xs :: [Slot]) where
@@ -178,9 +211,9 @@ instance ReifySlots '[] where
   reifyUser _ = []
   reifyTest _ = []
 
-instance (ReifySlot x, ReifySlots xs) => ReifySlots (x ': xs) where
-  reifyUser _ = slotUser (Proxy @x) : reifyUser (Proxy @xs)
-  reifyTest _ = slotTest (Proxy @x) : reifyTest (Proxy @xs)
+instance (ReifySlotAs 'Poly x, ReifySlotAs 'Concrete x, ReifySlots xs) => ReifySlots (x ': xs) where
+  reifyUser _ = slotAs (Proxy @'Poly) (Proxy @x) : reifyUser (Proxy @xs)
+  reifyTest _ = slotAs (Proxy @'Concrete) (Proxy @x) : reifyTest (Proxy @xs)
 
 -- List of tuples with fixed left and variable right: [(Int, a)]
 type App1ListTupleR (l :: Type) (n :: Nat) (t :: Type) =
@@ -216,7 +249,30 @@ instance (ReifyConstraint c, ReifyConstraints cs) => ReifyConstraints (c ': cs) 
   reifyConstraints _ = reifyConstraint (Proxy @c) : reifyConstraints (Proxy @cs)
 
 --------------------------------------------------------------------------------
--- Reify full Sig
+-- Reify full Sig (kind-level parameterized)
+--------------------------------------------------------------------------------
+
+class ReifySigAs (v :: SigView) (s :: Sig) where
+  showSigAs :: Proxy v -> Proxy s -> String
+  reifySigAs :: Proxy v -> Proxy s -> [String]
+
+instance (ReifyConstraints cs, ReifySlotsAs 'Poly slots) => ReifySigAs 'Poly ('MkSig cs slots) where
+  showSigAs _ _ =
+    let constraints = reifyConstraints (Proxy @cs)
+        types = reifySlotsAs (Proxy @'Poly) (Proxy @slots)
+        constraintPart = case constraints of
+          [] -> ""
+          [c] -> c ++ " => "
+          cs' -> "(" ++ intercalate ", " cs' ++ ") => "
+    in constraintPart ++ intercalate " -> " types
+  reifySigAs _ _ = reifySlotsAs (Proxy @'Poly) (Proxy @slots)
+
+instance ReifySlotsAs 'Concrete slots => ReifySigAs 'Concrete ('MkSig cs slots) where
+  showSigAs _ _ = intercalate " -> " (reifySlotsAs (Proxy @'Concrete) (Proxy @slots))
+  reifySigAs _ _ = reifySlotsAs (Proxy @'Concrete) (Proxy @slots)
+
+--------------------------------------------------------------------------------
+-- ReifySig (backward compat, defined via ReifySigAs)
 --------------------------------------------------------------------------------
 
 class ReifySig (s :: Sig) where
@@ -224,23 +280,13 @@ class ReifySig (s :: Sig) where
   showTestSig :: Proxy s -> String
   reifyUserSig :: Proxy s -> [String]
   reifyTestSig :: Proxy s -> [String]
-  
-instance (ReifyConstraints cs, ReifySlots slots) => ReifySig ('MkSig cs slots) where
-  showUserSig _ = 
-    let constraints = reifyConstraints (Proxy @cs)
-        types = reifyUser (Proxy @slots)
-        constraintPart = case constraints of
-          [] -> ""
-          [c] -> c ++ " => "
-          cs' -> "(" ++ intercalate ", " cs' ++ ") => "
-    in constraintPart ++ intercalate " -> " types
-  
-  showTestSig _ = intercalate " -> " (reifyTest (Proxy @slots))
 
-  reifyUserSig _ = reifyUser (Proxy @slots)
-  
-  reifyTestSig _ = reifyTest (Proxy @slots)
-
+instance (ReifySigAs 'Poly ('MkSig cs slots), ReifySigAs 'Concrete ('MkSig cs slots))
+  => ReifySig ('MkSig cs slots) where
+  showUserSig p = showSigAs (Proxy @'Poly) p
+  showTestSig p = showSigAs (Proxy @'Concrete) p
+  reifyUserSig p = reifySigAs (Proxy @'Poly) p
+  reifyTestSig p = reifySigAs (Proxy @'Concrete) p
 
 -- Show just the output type (last slot) for user view
 showUserOutputType :: ReifySig sig => Proxy sig -> String

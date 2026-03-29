@@ -575,6 +575,44 @@ spec = describe "RunGhc.MakeTest.HKTs" $ do
       showTestSig (Proxy @MultiConstraint) `shouldBe` "Int -> Char -> Bool"
 
   ---------------------------------------------------------------------------
+  -- VIII-b. showSigAs (kind-level parameterized)
+  ---------------------------------------------------------------------------
+  describe "showSigAs (kind-level parameterized)" $ do
+    it "Poly matches showUserSig" $
+      showSigAs (Proxy @'Poly) (Proxy @WithConstraint)
+        `shouldBe` showUserSig (Proxy @WithConstraint)
+    it "Concrete matches showTestSig" $
+      showSigAs (Proxy @'Concrete) (Proxy @WithConstraint)
+        `shouldBe` showTestSig (Proxy @WithConstraint)
+    it "Poly with no constraints" $
+      showSigAs (Proxy @'Poly) (Proxy @('MkSig '[] '[App1 [] 0 Int, Var 0 Int]))
+        `shouldBe` "[a] -> a"
+    it "Concrete with no constraints" $
+      showSigAs (Proxy @'Concrete) (Proxy @('MkSig '[] '[App1 [] 0 Int, Var 0 Int]))
+        `shouldBe` "[Int] -> Int"
+    it "Poly with multiple constraints" $
+      showSigAs (Proxy @'Poly) (Proxy @MultiConstraint)
+        `shouldBe` "(Eq a, Ord b) => a -> b -> Bool"
+    it "Concrete with multiple constraints" $
+      showSigAs (Proxy @'Concrete) (Proxy @MultiConstraint)
+        `shouldBe` "Int -> Char -> Bool"
+    it "Poly all Fix" $
+      showSigAs (Proxy @'Poly) (Proxy @('MkSig '[] '[Fix Int, Fix Bool]))
+        `shouldBe` "Int -> Bool"
+    it "Concrete all Fix" $
+      showSigAs (Proxy @'Concrete) (Proxy @('MkSig '[] '[Fix Int, Fix Bool]))
+        `shouldBe` "Int -> Bool"
+    it "Poly single slot" $
+      showSigAs (Proxy @'Poly) (Proxy @('MkSig '[] '[Fix Int]))
+        `shouldBe` "Int"
+    it "reifySigAs Poly" $
+      reifySigAs (Proxy @'Poly) (Proxy @WithConstraint)
+        `shouldBe` ["[a]", "Bool"]
+    it "reifySigAs Concrete" $
+      reifySigAs (Proxy @'Concrete) (Proxy @WithConstraint)
+        `shouldBe` ["[Int]", "Bool"]
+
+  ---------------------------------------------------------------------------
   -- IX. ToConcrete type family
   ---------------------------------------------------------------------------
   describe "ToConcrete type family" $ do

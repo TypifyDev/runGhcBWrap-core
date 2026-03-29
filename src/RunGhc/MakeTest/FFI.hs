@@ -11,6 +11,7 @@ module RunGhc.MakeTest.FFI where
 
 import Data.Aeson
 import Data.Kind (Type)
+import Data.Proxy
 import GHC.TypeLits (Nat,TypeError, ErrorMessage(..))
 import RunGhc.MakeTest.HKTs
 --import RunGhc.MakeTest.TypeSig (RequireValid)
@@ -172,3 +173,19 @@ type family RequireValid' (xs :: [Slot]) (conflict :: Maybe (Nat, Type, Type)) :
 type family UnwrapIOProxy (a :: Type) :: Type where
   UnwrapIOProxy (IO a) = a      -- IO a -> a, Maybe a -> a, [] a -> a
   UnwrapIOProxy a     = a      -- Int -> Int, Bool -> Bool
+
+--------------------------------------------------------------------------------
+-- Type-safe sample creation
+--------------------------------------------------------------------------------
+
+toSample :: forall sig. (Show (InputTuple sig), Show (OutputType sig))
+         => Proxy sig -> InputTuple sig -> OutputType sig -> (String, String)
+toSample _ i o = (show i, show o)
+
+toSampleInput :: forall sig. Show (InputTuple sig)
+              => Proxy sig -> InputTuple sig -> String
+toSampleInput _ = show
+
+toSampleOutput :: forall sig. Show (OutputType sig)
+               => Proxy sig -> OutputType sig -> String
+toSampleOutput _ = show
