@@ -22,6 +22,13 @@ import Data.Default
 import qualified Data.Text as T
 import Data.Char (toUpper, toLower)
 
+
+data RunGhcError
+  = Stage1Error_ReadUntrusted T.Text
+  | Stage2Error_Link T.Text
+  | Unexpected T.Text
+  deriving (Show)
+
 data UserModuleSettings = UserModuleSettings
   { _location :: [PathSegment]
   , _allowImports :: Bool
