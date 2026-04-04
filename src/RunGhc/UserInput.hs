@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DeriveGeneric #-}
 module RunGhc.UserInput where
 
 {-
@@ -21,7 +22,8 @@ import Text.IStr
 import Data.Default
 import qualified Data.Text as T
 import Data.Char (toUpper, toLower)
-
+import GHC.Generics
+import Data.Aeson
 
 data RunGhcError
   = Stage1Error_ReadUntrusted T.Text
