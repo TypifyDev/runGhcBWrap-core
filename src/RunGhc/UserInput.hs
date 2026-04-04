@@ -27,7 +27,10 @@ data RunGhcError
   = Stage1Error_ReadUntrusted T.Text
   | Stage2Error_Link T.Text
   | Unexpected T.Text
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance ToJSON RunGhcError
+instance FromJSON RunGhcError
 
 data UserModuleSettings = UserModuleSettings
   { _location :: [PathSegment]
