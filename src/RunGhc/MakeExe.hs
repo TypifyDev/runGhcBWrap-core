@@ -74,7 +74,7 @@ mkTestScriptBracketed
   -- ^ make test function
   -- first Symbol is just to define main properly  
   -> SystemModule --LocatedTestModule
-mkTestScriptBracketed (userModule) symbols imports extensions before after mkTest =
+mkTestScriptBracketed (_userModule) symbols imports extensions before after mkTest =
   -- We can also easily call Locate on this.. at any point
   ExpressionsImportsExtensionsOnly
   extensions
@@ -200,12 +200,10 @@ callFunction'
   -> LocatedUserModule
   -> (FunctionName -> Expressions)
   -> Executable
-callFunction' fname (LocatedUserModule loc) mkExpr = Executable mod [loc]
+callFunction' fname (LocatedUserModule loc) mkExpr = Executable modBinding [loc]
   where
-    qname = "UserModule"
-    importLine = showImportLine $ localQualifiedImport qname loc --Import Nothing [getPathSegments loc
     toScript = Script . getExpressions
-    mod = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname --Script
+    modBinding = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname --Script
 
 -- | Like callFunction' but user module goes to _untrustedModules
 callFunctionSandboxed
@@ -215,12 +213,12 @@ callFunctionSandboxed
   -> SandboxedExecutable
 callFunctionSandboxed fname (LocatedUserModule loc) mkExpr =
   SandboxedExecutable
-  { _sandboxedExe = Executable mod []
+  { _sandboxedExe = Executable modBinding []
   , _untrustedModules = [loc]
   }
   where
     toScript = Script . getExpressions
-    mod = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname
+    modBinding = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname
 
   
 class Qualifiable a where
