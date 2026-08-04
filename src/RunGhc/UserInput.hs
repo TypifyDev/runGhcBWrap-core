@@ -76,7 +76,7 @@ parseUserScript
 parseUserScript txt canContainImports cancelWhenMainExists =  
   let
     moduleHeadPieces = findModuleHeadPieces txt
-    mainExists = exists mainFuncParser txt -- (string "main :: IO ()"
+    mainExists = exists mainFuncParser (T.unpack txt) -- (string "main :: IO ()"
     x = case moduleHeadPieces of
       Just _ -> Left $ Script txt 
       Nothing -> Right $ Expressions txt
@@ -274,7 +274,7 @@ mainFuncParser = try a <|> b
       
   
 findModuleHeadPieces :: T.Text -> Maybe [String]
-findModuleHeadPieces txt = scrape moduleHeadPiece txt
+findModuleHeadPieces txt = scrape moduleHeadPiece (T.unpack txt)
     
 moduleHeadPiece :: Stream s m Char => ParsecT s u m String
 moduleHeadPiece = do

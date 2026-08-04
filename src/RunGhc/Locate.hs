@@ -38,6 +38,7 @@ type FileExt = T.Text
 pathSegsToPath :: FileExt -> [PathSegment] -> FilePath
 pathSegsToPath fileExt ((PathSegment p):[]) = T.unpack $ p <> fileExt
 pathSegsToPath fE ((PathSegment p):ps) = T.unpack p </> pathSegsToPath fE ps
+pathSegsToPath _ [] = error "pathSegsToPath: called with empty path-segment list"
 
 pathSegsFromFilePath :: FilePath -> [PathSegment]
 pathSegsFromFilePath = fmap (PathSegment . T.pack) . List.splitOn "/"
@@ -45,6 +46,7 @@ pathSegsFromFilePath = fmap (PathSegment . T.pack) . List.splitOn "/"
 pathSegsToModuleName :: [PathSegment] -> T.Text
 pathSegsToModuleName ((PathSegment p):[]) = p
 pathSegsToModuleName ((PathSegment p):ps) = p <> "." <> pathSegsToModuleName ps
+pathSegsToModuleName [] = error "pathSegsToModuleName: called with empty path-segment list"
 
 -- HeadlessScript ==> LocatedModule 
 makeSourcePath :: FilePath -> [PathSegment] -> FilePath

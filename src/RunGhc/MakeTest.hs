@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -14,11 +15,11 @@ import RunGhc.SystemModule
 import RunGhc.Executable
 import RunGhc.MakeExe
 import RunGhc.UserInput
-import RunGhc.MakeTest.TypeSig
-import RunGhc.MakeTest.HKTs
-import RunGhc.MakeTest.FFI
+import RunGhc.MakeTest.TypeSig()
+import RunGhc.MakeTest.HKTs()
+import RunGhc.MakeTest.FFI()
 
-import GHC.Generics
+import GHC.Generics hiding (moduleName)
 import Text.IStr
 import Control.Monad (replicateM)
 import Data.Typeable
@@ -27,7 +28,7 @@ import Data.Maybe
 import qualified Data.Text as T
 import Data.Default
 import Data.Bifunctor
-import Data.Text (Text, pack)
+import Data.Text (pack)
 import System.Random (randomRIO)
 import System.Exit
 import Data.Char (toUpper)
@@ -826,8 +827,8 @@ compareFuncSandboxed mkFn mkScript sourceCode = do
 --         Just (c, rest) -> T.cons (toUpper c) rest
 randomAlphaNumCamelCaseName :: Int -> IO T.Text
 randomAlphaNumCamelCaseName numWords = do
-    words <- replicateM numWords randomWord
-    pure $ T.concat $ zipWith capitalize [0..] words
+    wordsList <- replicateM numWords randomWord
+    pure $ T.concat $ zipWith capitalize [0..] wordsList
   where
     alphaNum = ['a'..'z'] ++ ['0'..'9']
     randomWord :: IO T.Text
@@ -909,7 +910,7 @@ main = do
 |]
 
 showFnHKTExpression :: FnHKT a b -> T.Text
-showFnHKTExpression f = ensureIO (purity f) "pure ." <> (getFnHKTLambda f)
+showFnHKTExpression f = ensureIO (fnhktPurity f) "pure ." <> (getFnHKTLambda f)
   where
     ensureIO :: Purity -> T.Text -> T.Text
     ensureIO b t = case b of
@@ -981,7 +982,7 @@ newtype TypedName a = TypedName { getTypedReference :: T.Text }
 data FnT a b = FnT { getFnT :: T.Text }
 
 data FnHKT a b = FnHKT
-  { purity :: Purity
+  { fnhktPurity :: Purity
   , getFnHKTLambda :: T.Text
   }
 

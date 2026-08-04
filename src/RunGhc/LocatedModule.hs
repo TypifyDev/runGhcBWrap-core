@@ -6,19 +6,15 @@ module RunGhc.LocatedModule where
 
 import RunGhc.SystemModule
 import RunGhc.Locate
-import System.FilePath
 import Data.Aeson
 import GHC.Generics
-import qualified Data.List.Split as List
-import qualified Data.List as List
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
 
 localImport :: LocatedModule -> Import
-localImport mod = Import Nothing (getPathSegments mod)
+localImport md = Import Nothing (getPathSegments md)
 
 localQualifiedImport :: T.Text -> LocatedModule -> Import
-localQualifiedImport qname mod = Import (Just qname) (getPathSegments mod)
+localQualifiedImport qname md = Import (Just qname) (getPathSegments md)
 
 -- This is an interesting case
 -- because the result can absolutely be wrong
