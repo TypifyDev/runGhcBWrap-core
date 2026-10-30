@@ -9,6 +9,7 @@ import RunGhc.LocatedModule
 import RunGhc.Locate
 import System.FilePath
 import Data.Aeson
+import Data.List.NonEmpty (NonEmpty)
 import GHC.Generics
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -44,7 +45,7 @@ data ExecutableWithDepsWithCommand = ExecutableWithDepsWithCommand
 
 newtype PackageName = PackageName { getPackageName :: T.Text }
 
-getTargetModule :: Executable -> [PathSegment]
+getTargetModule :: Executable -> NonEmpty PathSegment
 getTargetModule = getPathSegments . _main
 
 getTargetModulePath :: T.Text -> Executable -> FilePath
@@ -54,6 +55,12 @@ getTargetModulePath fext = pathSegsToPath fext  . getTargetModule
 writeExecutable :: FilePath -> Executable -> IO ()
 writeExecutable baseDir exe =
   writeLocatedFiles baseDir $ _main exe : _library exe
+
+-- | Wrap raw expressions as a 'Script'. Exported so downstream consumers
+-- can build a script from a bare 'Expressions' payload without going through
+-- 'systemModuleToScript'.
+fromExpressions :: Expressions -> Script
+fromExpressions = Script . getExpressions
 
 writeLocatedFiles :: FilePath -> [LocatedModule] -> IO ()
 writeLocatedFiles baseDir modules = do
@@ -67,7 +74,7 @@ writeLocatedFiles baseDir modules = do
       FromSystemModule pathSegs systemModule -> do
         T.writeFile (baseDir </> pathSegsToPath fileExt pathSegs) $ getScript $ systemModuleToScript pathSegs systemModule
         -- So that we can write to file
-    makeModuleDeclaration :: [PathSegment] -> Script
+    makeModuleDeclaration :: NonEmpty PathSegment -> Script
     makeModuleDeclaration pathSegs = Script ("module " <> (pathSegsToModuleName pathSegs) <> " where\n")
 
     mkImport :: Import -> T.Text
@@ -76,13 +83,10 @@ writeLocatedFiles baseDir modules = do
       Just qName -> "import qualified " <> pathSegsToModuleName (_import_pathSeg imp) <> " as " <> qName 
     makeImports (Imports importList) = Script $ T.unlines $ mkImport <$> importList
 
-    fromExpressions :: Expressions -> Script
-    fromExpressions = Script . getExpressions
-
-    makeExtensions (Extensions (exts)) = Script $ 
+    makeExtensions (Extensions (exts)) = Script $
       "{-# LANGUAGE" <> T.intercalate ", " exts <> " #-}"
     
-    systemModuleToScript :: [PathSegment] -> SystemModule -> Script
+    systemModuleToScript :: NonEmpty PathSegment -> SystemModule -> Script
     systemModuleToScript pathSegs = \case
       ExpressionsOnly (Expressions rawSource) ->
         makeModuleDeclaration pathSegs -- Script ("module " <> T.pack (pathSegsToModuleName pathSegs) <> " where\n")

@@ -7,6 +7,7 @@ module RunGhc.LocatedModule where
 import RunGhc.SystemModule
 import RunGhc.Locate
 import Data.Aeson
+import Data.List.NonEmpty (NonEmpty)
 import GHC.Generics
 import qualified Data.Text as T
 
@@ -25,7 +26,7 @@ localQualifiedImport qname md = Import (Just qname) (getPathSegments md)
 -- User modules however can be designed to fail this way if user
 -- has been allowed to make a mistake and has
 class Locatable a where
-  locate :: [PathSegment] -> a -> LocatedModule
+  locate :: NonEmpty PathSegment -> a -> LocatedModule
 -- | These instances describe the
 --   boring logistical differences between
 -- 
@@ -61,7 +62,7 @@ instance SemigroupModule LocatedModule where
     sys@(FromSystemModule _ _) -> addFuncsDataDecls script sys
   
 
-getPathSegments :: LocatedModule -> [PathSegment]
+getPathSegments :: LocatedModule -> NonEmpty PathSegment
 getPathSegments = \case
   FromLocatedScript (LocatedScript pathSegs _) -> pathSegs
   FromSystemModule pathSegs _ -> pathSegs
@@ -69,7 +70,7 @@ getPathSegments = \case
 -- Is there value in this construct?
 data DependentLocatedModule = DependentLocatedModule
   { _locatedModule :: LocatedModule
-  , _deps :: [[PathSegment]]
+  , _deps :: [NonEmpty PathSegment]
   }
 
 data LocatedModule
@@ -77,7 +78,7 @@ data LocatedModule
   -- ^ Nothing to process to create+write Module
   --   but we probably still need to make it as a lib and link it
   --   with expected targets if it is a user Module
-  | FromSystemModule [PathSegment] SystemModule
+  | FromSystemModule (NonEmpty PathSegment) SystemModule
   deriving Generic
   -- ^ Builder descriptions to create+write Module
 instance ToJSON LocatedModule
@@ -85,7 +86,7 @@ instance FromJSON LocatedModule
 
 
 -- | Witness that this script has module written in
-data LocatedScript = LocatedScript [PathSegment] Script deriving Generic
+data LocatedScript = LocatedScript (NonEmpty PathSegment) Script deriving Generic
 instance ToJSON LocatedScript
 instance FromJSON LocatedScript
 

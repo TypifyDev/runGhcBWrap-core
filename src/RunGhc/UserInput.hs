@@ -18,7 +18,7 @@ import RunGhc.LocatedModule
 import RunGhc.Locate
 import RunGhc.SystemModule
 import Data.Bifunctor
-import Text.IStr
+import Data.List.NonEmpty (NonEmpty(..))
 import Data.Default
 import qualified Data.Text as T
 import Data.Char (toUpper, toLower)
@@ -35,14 +35,14 @@ instance ToJSON RunGhcError
 instance FromJSON RunGhcError
 
 data UserModuleSettings = UserModuleSettings
-  { _location :: [PathSegment]
+  { _location :: NonEmpty PathSegment
   , _allowImports :: Bool
   , _overrideMake_If_main_exists :: Bool
   , _mkSystemModule :: Expressions -> SystemModule
   }
 instance Default UserModuleSettings where
   def = UserModuleSettings
-    { _location = [PathSegment "UserModule"]
+    { _location = PathSegment "UserModule" :| []
     , _allowImports = True
     , _overrideMake_If_main_exists = False
     , _mkSystemModule = ExpressionsOnly
@@ -58,14 +58,14 @@ mkUserModule' cfg input =
   input
 
 handleUserInputMultipleFiles :: (FilePath, Script) -> [(FilePath, T.Text)] -> Executable
-handleUserInputMultipleFiles main@(targetPath, Script mainSrc) txtsWithPath =
+handleUserInputMultipleFiles main_ txtsWithPath =
   let
     f (fp, script) =
       FromLocatedScript $ LocatedScript (pathSegsFromFilePath fp) $ Script script
     fMain (fp, Script script) =
       FromLocatedScript $ LocatedScript (pathSegsFromFilePath fp) $ Script script
   in
-    Executable (fMain main) (f <$> txtsWithPath)
+    Executable (fMain main_) (f <$> txtsWithPath)
 
 -- tryHandleUserInput 
 parseUserScript
@@ -73,18 +73,15 @@ parseUserScript
   -> Bool -- can contain imports?
   -> Bool -- can contain main?
   -> Either Script Expressions
-parseUserScript txt canContainImports cancelWhenMainExists =  
+parseUserScript txt _canContainImports cancelWhenMainExists =
   let
     moduleHeadPieces = findModuleHeadPieces txt
     mainExists = exists mainFuncParser (T.unpack txt) -- (string "main :: IO ()"
-    x = case moduleHeadPieces of
-      Just _ -> Left $ Script txt 
-      Nothing -> Right $ Expressions txt
 
   in case moduleHeadPieces of
        Just _ ->
          -- We cannot interact with this script
-         Left $ Script txt 
+         Left $ Script txt
        Nothing ->
          case mainExists && cancelWhenMainExists of
            True -> Left $ Script txt
@@ -96,7 +93,7 @@ handleUserInputSingleFile
 handleUserInputSingleFile txt =
   LocatedUserModule
   $ FromLocatedScript
-  $ LocatedScript [PathSegment "UserLibrary"]
+  $ LocatedScript (PathSegment "UserLibrary" :| [])
   $ Script txt
 
     
@@ -120,7 +117,7 @@ unsafeMkLocatedUserModule
   -> LocatedUserModule
 unsafeMkLocatedUserModule expr =
   LocatedUserModule
-  $ FromSystemModule [PathSegment "UserLibrary"]
+  $ FromSystemModule (PathSegment "UserLibrary" :| [])
   $ ExpressionsOnly
   $ expr
 
@@ -209,7 +206,7 @@ ma <+> mb = (,) <$> ma <*> mb
   
 -- TODO: give module name as string arg
 mkUserModule
-  :: [PathSegment] -- location
+  :: NonEmpty PathSegment -- location
   -> Bool -- allow imports?
   -> Bool -- main exists?
   -> (Expressions -> SystemModule) -- mkModule (eg addImports, addExts, ...)
@@ -223,7 +220,7 @@ mkUserModule pathSegs allowImports mainExists mutModule input =
 -- Handle if user wrote their own full module,
 -- or if we can make a SystemModule freely
 locateUserSource
-  :: [PathSegment]
+  :: NonEmpty PathSegment
   -> Either Script SystemModule
   -> LocatedModule
 locateUserSource pathSegs userScript =

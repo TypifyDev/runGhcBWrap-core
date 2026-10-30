@@ -12,6 +12,7 @@ import RunGhc.Executable
 import RunGhc.SystemModule
 
 import Text.IStr
+import Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List as List
 import qualified Data.Text as T
 
@@ -50,8 +51,8 @@ toSandboxedExe (LocatedUserModule locUser) (LocatedTestModule locTest) =
 defaultHeadMainModule :: (Imports, Extensions)
 defaultHeadMainModule =
   ( (Imports
-      [ Import Nothing $ PathSegment <$> ["Data", "Text"]
-      , Import Nothing $ PathSegment <$> ["Data", "Aeson"]
+      [ Import Nothing $ PathSegment "Data" :| [PathSegment "Text"]
+      , Import Nothing $ PathSegment "Data" :| [PathSegment "Aeson"]
       ])
   , (Extensions
       ["OverloadedStrings"
@@ -96,13 +97,13 @@ main = #{getSymbol pre} >> #{getSymbol inner} >> #{getSymbol post}
 
 
 -- makeTestScript "f" withF
-makeTestScript :: [PathSegment] -> FunctionName -> (FunctionName -> Expressions) -> LocatedModule
+makeTestScript :: NonEmpty PathSegment -> FunctionName -> (FunctionName -> Expressions) -> LocatedModule
 makeTestScript pathLoc fname withF = FromSystemModule pathLoc $ ExpressionsOnly $ withF fname
 
 type QualifiedName = T.Text
 makeTestScriptWithImportsExtensions
   :: Qualifiable a
-  => [PathSegment]
+  => NonEmpty PathSegment
   -> Imports
   -> Extensions
   -> a -- FunctionName for instance
@@ -129,7 +130,7 @@ mkMainWithDefaultHead
   -- ^ Resulting module
 mkMainWithDefaultHead userModule symbols mkExpr =
   makeTestScriptWithImportsExtensions
-  [PathSegment "Main"]
+  (PathSegment "Main" :| [])
   (fst $ defaultHeadMainModule)
   (snd $ defaultHeadMainModule)
   symbols
@@ -203,7 +204,7 @@ callFunction'
 callFunction' fname (LocatedUserModule loc) mkExpr = Executable modBinding [loc]
   where
     toScript = Script . getExpressions
-    modBinding = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname --Script
+    modBinding = FromLocatedScript $ LocatedScript (PathSegment "Main" :| []) $ toScript $ mkExpr fname --Script
 
 -- | Like callFunction' but user module goes to _untrustedModules
 callFunctionSandboxed
@@ -218,7 +219,7 @@ callFunctionSandboxed fname (LocatedUserModule loc) mkExpr =
   }
   where
     toScript = Script . getExpressions
-    modBinding = FromLocatedScript $ LocatedScript [PathSegment "Main"] $ toScript $ mkExpr fname
+    modBinding = FromLocatedScript $ LocatedScript (PathSegment "Main" :| []) $ toScript $ mkExpr fname
 
   
 class Qualifiable a where

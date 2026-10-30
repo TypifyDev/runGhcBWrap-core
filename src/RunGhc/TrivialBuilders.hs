@@ -10,6 +10,7 @@ import RunGhc.MakeExe
 import RunGhc.Executable
 import RunGhc.UserInput
 import Data.Default
+import Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.Text as T
 
 
@@ -23,7 +24,7 @@ withF fname mkScript userScript =
   Right $ toExe userModule testScript
   where
     userModule = mkUserModule' settings_ userScript
-    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript fname
+    testScript = LocatedTestModule $ locate (PathSegment "Main" :| []) $ mkScript fname
     settings_ = def
 
 withFSandboxed
@@ -35,7 +36,7 @@ withFSandboxed fname mkScript userScript =
   Right $ toSandboxedExe userModule testScript
   where
     userModule = mkUserModule' settings_ userScript
-    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript fname
+    testScript = LocatedTestModule $ locate (PathSegment "Main" :| []) $ mkScript fname
     settings_ = def
 
 runF :: FunctionName -> T.Text -> Either T.Text Executable
@@ -61,12 +62,12 @@ runMainSandboxed :: T.Text -> Either T.Text SandboxedExecutable
 runMainSandboxed = runFSandboxed "main"
 
 runMainHs :: T.Text -> Either T.Text Executable
-runMainHs = Right . toSingleModuleExe . locate [PathSegment "Main"] . Script 
+runMainHs = Right . toSingleModuleExe . locate (PathSegment "Main" :| []) . Script 
 
 -- | Interesting way to do it, but we need a way for the Executable
 --   to instruct how it should be run (SAFELY!)
 -- runModuleNameHs :: T.Text -> Either T.Text Executable
--- runModuleNameHs = Right . toSingleModuleExe . locate [PathSegment "Main"] . Script 
+-- runModuleNameHs = Right . toSingleModuleExe . locate (PathSegment "Main" :| []) . Script 
 
 
 withSymbols
@@ -79,7 +80,7 @@ withSymbols symbols mkScript userScript =
   Right $ toExe userModule testScript
   where
     userModule = mkUserModule' settings_ userScript
-    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript symbols
+    testScript = LocatedTestModule $ locate (PathSegment "Main" :| []) $ mkScript symbols
     settings_ = def
 
 withSymbolsSandboxed
@@ -92,7 +93,7 @@ withSymbolsSandboxed symbols mkScript userScript =
   Right $ toSandboxedExe userModule testScript
   where
     userModule = mkUserModule' settings_ userScript
-    testScript = LocatedTestModule $ locate [PathSegment "Main"] $ mkScript symbols
+    testScript = LocatedTestModule $ locate (PathSegment "Main" :| []) $ mkScript symbols
     settings_ = def
 
 mkSelfTestedExecutable :: LocatedUserModule -> Executable
@@ -126,15 +127,15 @@ addUntrustedModuleQualified qname (LocatedUserModule loc) sandboxed =
 unsafeMkExecutable :: Script -> Script -> Executable
 unsafeMkExecutable userScript testScript =
   Executable
-  (FromLocatedScript (LocatedScript [PathSegment "Main"] testScript))
-  [(FromLocatedScript (LocatedScript [PathSegment "UserModule"] userScript))
+  (FromLocatedScript (LocatedScript (PathSegment "Main" :| []) testScript))
+  [(FromLocatedScript (LocatedScript (PathSegment "UserModule" :| []) userScript))
   ]
 
 unsafeMkSandboxedExecutable :: Script -> Script -> SandboxedExecutable
 unsafeMkSandboxedExecutable userScript testScript =
   SandboxedExecutable
-  { _sandboxedExe = Executable (FromLocatedScript (LocatedScript [PathSegment "Main"] testScript)) []
-  , _untrustedModules = [FromLocatedScript (LocatedScript [PathSegment "UserModule"] userScript)]
+  { _sandboxedExe = Executable (FromLocatedScript (LocatedScript (PathSegment "Main" :| []) testScript)) []
+  , _untrustedModules = [FromLocatedScript (LocatedScript (PathSegment "UserModule" :| []) userScript)]
   }
 --unsafeMkExecutable = 
 newtype ImportName = ImportName T.Text
@@ -158,7 +159,7 @@ mkSimpleSandboxedExecutable (ImportName qname) locUser (LocatedMainModule locMai
 asIs :: Script -> Executable
 asIs scr =
   Executable
-  { _main = FromLocatedScript $ LocatedScript [PathSegment "Main"] scr
+  { _main = FromLocatedScript $ LocatedScript (PathSegment "Main" :| []) scr
   , _library = []
   }
 
@@ -168,7 +169,7 @@ asLibWithMain :: T.Text -> (LocatedUserModule, Bool)
 asLibWithMain txt =
   (,True) -- that main exists
   $ LocatedUserModule
-  $ locate [PathSegment "UserLibrary"]
+  $ locate (PathSegment "UserLibrary" :| [])
   $ Script txt
 
 -- There is no option for the user
@@ -177,11 +178,8 @@ asExpressionsWithMain :: T.Text -> (LocatedUserModule, Bool)
 asExpressionsWithMain txt =
   (,True) -- that main exists
   $ LocatedUserModule
-  $ locate [PathSegment "UserLibrary"]
+  $ locate (PathSegment "UserLibrary" :| [])
   $ ExpressionsOnly $ Expressions txt
-
-mkCommonExecutable :: CommonExe -> Executable
-mkCommonExecutable = undefined
 
 data CommonExe
   = SimpleUserScript Script -- is main, with maybe some actions

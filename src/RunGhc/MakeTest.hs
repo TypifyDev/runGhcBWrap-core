@@ -24,7 +24,9 @@ import Text.IStr
 import Control.Monad (replicateM)
 import Data.Typeable
 import Data.Aeson
+import Data.List.NonEmpty (NonEmpty(..))
 import Data.Maybe
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
 import Data.Default
 import Data.Bifunctor
@@ -658,7 +660,7 @@ compareFuncHKT mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
     testLibScript :: Script
     testLibScript = (getTypedNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName (TypeInfo Proxy Proxy)
     locatedTestLib :: LocatedTestModule 
-    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+    locatedTestLib = LocatedTestModule $ locate (PathSegment moduleName :| []) $ testLibScript
 
     settings_ = def
     userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
@@ -668,7 +670,7 @@ compareFuncHKT mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
       testVarName
       (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
       (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
-    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+    locatedMainModule = LocatedTestModule $ locate (PathSegment "Main" :| []) mainModule
     
   pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
 
@@ -685,7 +687,7 @@ compareFuncHKTSandboxed mkFn mkScript sourceCode = do
     testLibScript :: Script
     testLibScript = (getTypedNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName (TypeInfo Proxy Proxy)
     locatedTestLib :: LocatedTestModule
-    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+    locatedTestLib = LocatedTestModule $ locate (PathSegment moduleName :| []) $ testLibScript
 
     settings_ = def
     userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
@@ -694,7 +696,7 @@ compareFuncHKTSandboxed mkFn mkScript sourceCode = do
       testVarName
       (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
       (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
-    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+    locatedMainModule = LocatedTestModule $ locate (PathSegment "Main" :| []) mainModule
 
   pure $ Right $ toCompareSandboxedExe userModule locatedTestLib locatedMainModule
 
@@ -715,7 +717,7 @@ compareFuncTyped mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
     testLibScript :: Script
     testLibScript = (getTypedNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName (TypeInfo Proxy Proxy)
     locatedTestLib :: LocatedTestModule 
-    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+    locatedTestLib = LocatedTestModule $ locate (PathSegment moduleName :| []) $ testLibScript
 
     settings_ = def
     userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
@@ -725,7 +727,7 @@ compareFuncTyped mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
       testVarName
       (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
       (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
-    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+    locatedMainModule = LocatedTestModule $ locate (PathSegment "Main" :| []) mainModule
     
   pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
 
@@ -741,7 +743,7 @@ compareFuncTypedSandboxed mkFn mkScript sourceCode = do
     testLibScript :: Script
     testLibScript = (getTypedNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName (TypeInfo Proxy Proxy)
     locatedTestLib :: LocatedTestModule
-    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+    locatedTestLib = LocatedTestModule $ locate (PathSegment moduleName :| []) $ testLibScript
 
     settings_ = def
     userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
@@ -750,7 +752,7 @@ compareFuncTypedSandboxed mkFn mkScript sourceCode = do
       testVarName
       (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
       (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
-    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+    locatedMainModule = LocatedTestModule $ locate (PathSegment "Main" :| []) mainModule
 
   pure $ Right $ toCompareSandboxedExe userModule locatedTestLib locatedMainModule
 
@@ -769,7 +771,7 @@ compareFunc mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
     testLibScript :: Script
     testLibScript = (getNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName
     locatedTestLib :: LocatedTestModule 
-    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+    locatedTestLib = LocatedTestModule $ locate (PathSegment moduleName :| []) $ testLibScript
 
     settings_ = def
     userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
@@ -779,7 +781,7 @@ compareFunc mkFn mkScript sourceCode = do -- (fnameUser, userScript) = do
       testVarName
       (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
       (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
-    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+    locatedMainModule = LocatedTestModule $ locate (PathSegment "Main" :| []) mainModule
     
   pure $ Right $ toCompareExe userModule locatedTestLib locatedMainModule
 
@@ -794,7 +796,7 @@ compareFuncSandboxed mkFn mkScript sourceCode = do
     testLibScript :: Script
     testLibScript = (getNoNameScript mkScript) (ModuleName moduleName) testFuncName testVarName
     locatedTestLib :: LocatedTestModule
-    locatedTestLib = LocatedTestModule $ locate [PathSegment moduleName] $ testLibScript
+    locatedTestLib = LocatedTestModule $ locate (PathSegment moduleName :| []) $ testLibScript
 
     settings_ = def
     userModule = mkUserModule' settings_ $ _sourceCode_code sourceCode
@@ -803,7 +805,7 @@ compareFuncSandboxed mkFn mkScript sourceCode = do
       testVarName
       (localImport $ getLocatedUserModule userModule, _sourceCode_target sourceCode)
       (localImport $ getLocatedTestModule locatedTestLib, testFuncName)
-    locatedMainModule = LocatedTestModule $ locate [PathSegment "Main"] mainModule
+    locatedMainModule = LocatedTestModule $ locate (PathSegment "Main" :| []) mainModule
 
   pure $ Right $ toCompareSandboxedExe userModule locatedTestLib locatedMainModule
 
@@ -955,7 +957,7 @@ newtype ImportName = ImportName { importName :: T.Text }
 getImportName :: Import -> ImportName
 getImportName imp = ImportName $ fromMaybe (combine $ _import_pathSeg imp) (_import_qualifiedName imp)
   where
-    combine = T.intercalate "." . fmap getPathSegment
+    combine = T.intercalate "." . NE.toList . NE.map getPathSegment
 -- get either qualified name or just the module name as path
 -- keeping in mind that everything is technically a qualified import
 -- where if we havent overrided the name it is just the Module's name itself
@@ -1362,26 +1364,6 @@ arity20Str x =
 
 
 type EitherDesign = Either
-script
-  :: forall a
-  .  Typeable a
-  => LocatedUserModule -- The user's solution, to make 
-  -> LocatedUserModule -- Our Correct Solution, to make an import
-  -> EitherDesign [[a]] [a]
-  -- We could choose the design of this being a list of type names OR just the tests themselves
-  -- which would be all we need to get the type info
-script = undefined   
--- script fname = [istr|
--- main = do
---   inputs <- makeTest #{test11Inputs} 
-
---   valsUser <- mapM User.#{fname} inputs
---   valsOurSolution <- mapM Solution.#{fname} inputs
-
---   print $ zipWith (==) valsUser valsOurSolution
-
--- |]
-
 
 data Generator
   = StaticConstant T.Text
